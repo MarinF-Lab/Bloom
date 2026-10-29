@@ -16,7 +16,12 @@ Tienda pública y app de gestión de Bloom, pastelería casera en Retiro.
 
 Igual que en la tienda [Shop](https://github.com/MarinF-Lab/Shop): en la app de gestión, **Catálogo → Entrar con Google**, y cada producto tiene **Subir foto**. La foto se achica en el teléfono (lado mayor 800 px, JPG) y se guarda en Firestore, sin Firebase Storage, en `tiendas/{uid}/fotos/bloom-{id}`. La tienda encuentra a la dueña con la dirección corta `enlaces/bloom` y muestra la foto en lugar del dibujo.
 
-Usa el mismo proyecto de Firebase y las mismas reglas que Shop. Para que funcione en GitHub Pages, el dominio `marinf-lab.github.io` debe estar en **Firebase → Authentication → Settings → Authorized domains**.
+Usa su propio proyecto de Firebase (`bloom-522eb`). Configuración, una sola vez, en la [consola de Firebase](https://console.firebase.google.com/project/bloom-522eb):
+
+1. **Authentication → Sign-in method → Google → Habilitar.**
+2. **Authentication → Settings → Authorized domains:** agregar `marinf-lab.github.io`.
+3. **Firestore Database → Crear base de datos** (modo producción).
+4. **Firestore → Reglas:** pegar el contenido de `firestore.rules` y **Publicar** (o `firebase deploy --only firestore:rules`).
 
 En la app de Android Google no deja iniciar sesión, así que ahí el botón abre la gestión en el navegador.
 
