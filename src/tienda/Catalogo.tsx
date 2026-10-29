@@ -8,7 +8,7 @@ import { useTienda } from "./contexto";
 
 const ILUSTRACION = { torta: BigTorta, pie: BigPie, postre: BigPostre, pan: BigPan };
 
-export function Catalogo({ cat, onCat, qty, onAdd }: { cat: string; onCat: (c: string) => void; qty: Cantidades; onAdd: (p: Producto) => void }) {
+export function Catalogo({ cat, onCat, qty, onAbrir }: { cat: string; onCat: (c: string) => void; qty: Cantidades; onAbrir: (p: Producto) => void }) {
   const { productos, fotos, config } = useTienda();
   const CATS = ["Todo", ...categorias(productos)];
   const shown = productos.filter((p) => cat === "Todo" || p.cat === cat);
@@ -42,7 +42,7 @@ export function Catalogo({ cat, onCat, qty, onAdd }: { cat: string; onCat: (c: s
           const puede = p.disponible && config.abierta;
           return (
             <article key={p.id} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-paper">
-              <div className="relative flex h-[170px] items-center justify-center text-cocoa" style={{ background: TINTS[p.kind] }}>
+              <button type="button" onClick={() => onAbrir(p)} aria-label={`Ver ${p.name}`} className="relative flex h-[170px] w-full items-center justify-center border-none p-0 text-cocoa" style={{ background: TINTS[p.kind] }}>
                 {fotos[p.id] ? <img src={fotos[p.id]} alt={`Foto de ${p.name}`} className="absolute inset-0 size-full object-cover" /> : <Ilus size={70} />}
                 <div className="absolute top-3 right-3 left-3 flex flex-wrap gap-1.5">
                   {tags.map((t) => (
@@ -51,23 +51,24 @@ export function Catalogo({ cat, onCat, qty, onAdd }: { cat: string; onCat: (c: s
                     </span>
                   ))}
                 </div>
-              </div>
+              </button>
               <div className="flex flex-1 flex-col gap-2 px-[18px] pt-[18px] pb-5">
                 <div className="text-[12px] font-semibold text-olive">{p.size}</div>
-                <h3 className="m-0 font-display text-[24px] font-semibold leading-[1.1]">{p.name}</h3>
+                <h3 className="m-0 font-display text-[24px] font-semibold leading-[1.1]">
+                  <button type="button" onClick={() => onAbrir(p)} className="border-none bg-transparent p-0 text-left text-inherit">{p.name}</button>
+                </h3>
                 <p className="m-0 flex-1 text-[13px] leading-[1.55] text-muted">{p.desc}</p>
                 {p.kind === "torta" && <div className="text-[12px] text-rose-ink">Consulta por otros tamaños y porciones.</div>}
                 <div className="mt-1.5 flex items-center justify-between gap-2.5">
                   <span className="text-[19px] font-semibold text-cocoa">{clp(p.price)}</span>
                   <button
                     type="button"
-                    onClick={() => onAdd(p)}
-                    disabled={!puede}
-                    aria-label={puede ? `Agregar ${p.name} al pedido` : `${p.name}: ${p.disponible ? "tienda cerrada" : "agotado"}`}
-                    className="min-h-11 rounded-[22px] border-none px-[18px] text-[14px] font-medium transition-colors disabled:cursor-not-allowed"
+                    onClick={() => onAbrir(p)}
+                    aria-label={`${q > 0 ? `${p.name}: ${q} en tu caja` : `Ver ${p.name}`}`}
+                    className="min-h-11 rounded-[22px] border-none px-[18px] text-[14px] font-medium transition-colors"
                     style={!puede ? { background: "#ECE6DC", color: "#5E5248" } : q > 0 ? { background: "#E6EAD2", color: "#3F4A1F" } : { background: "#6B4A33", color: "#FCF7EC" }}
                   >
-                    {!p.disponible ? "Agotado" : !config.abierta ? "Tienda cerrada" : q > 0 ? `En tu caja · ${q}` : "Agregar"}
+                    {!p.disponible ? "Agotado" : q > 0 ? `En tu caja · ${q}` : "Ver"}
                   </button>
                 </div>
               </div>
