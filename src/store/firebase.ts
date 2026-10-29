@@ -1,13 +1,14 @@
-// Firebase, igual que en la tienda Shop: el mismo proyecto y el SDK "compat" cargado desde gstatic
-// solo cuando hace falta. Los valores son públicos; lo que protege los datos son las reglas de Firestore.
+// Firebase: el proyecto propio de Bloom, con el SDK "compat" cargado desde gstatic solo cuando hace
+// falta (como en la tienda Shop). Los valores son públicos; lo que protege los datos son las reglas
+// de Firestore (firestore.rules).
 
 import { FOTO_LIMITE, FOTO_MAX, calidades, idFoto, medidasAchicadas } from "../core/fotos";
 
 const FIREBASE = {
-  apiKey: "AIzaSyAAE6l_UwOVE1KB1QiXBNXhunzhJs78tL8",
-  authDomain: "tiendas-f9af9.firebaseapp.com",
-  projectId: "tiendas-f9af9",
-  appId: "1:39811090432:web:9e462dc5388f39265b30e5",
+  apiKey: "AIzaSyAOdtiD0mRI_xRe0CwovqbZ9nux_rEs4eY",
+  authDomain: "bloom-522eb.firebaseapp.com",
+  projectId: "bloom-522eb",
+  appId: "1:505748524347:web:e389061c9c62ffeaec3b1e",
 };
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 

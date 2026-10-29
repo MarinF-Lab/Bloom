@@ -1,0 +1,46 @@
+rules_version = '2';
+
+/* Reglas de Bloom Pastelería (mismo esquema que la tienda Shop).
+   - enlaces/bloom: dirección corta que lleva de la tienda al uid de la dueña.
+   - tiendas/{uid}/fotos: fotos de los productos, achicadas. Las ve cualquiera
+     (la tienda pública); solo la dueña las sube, cambia o borra.
+   - Todo lo demás de tiendas/{uid} es privado de la dueña. */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function esDueno(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    /* dirección corta: pública para leer; solo su dueña la crea, cambia o borra */
+    match /enlaces/{nombre} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null && resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    match /tiendas/{uid} {
+      allow read, write: if esDueno(uid);
+
+      /* fotos de productos: { img: data URL jpg, actualizado: fecha }, bajo 1 MB por documento */
+      match /fotos/{docId} {
+        allow read: if true;
+        allow create, update: if esDueno(uid)
+          && request.resource.data.keys().hasOnly(['img', 'actualizado'])
+          && request.resource.data.img is string
+          && request.resource.data.img.matches('^data:image/jpeg;base64,.*');
+        allow delete: if esDueno(uid);
+      }
+
+      /* cualquier otra colección futura: solo la dueña */
+      match /{coleccion}/{docId} {
+        allow read, write: if esDueno(uid);
+      }
+    }
+  }
+}
