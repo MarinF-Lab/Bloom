@@ -37,46 +37,58 @@ export function subtotal(products: readonly ConPrecio[], q: Cantidades): number 
   return products.reduce((a, p) => a + (q[p.id] ?? 0) * p.price, 0);
 }
 
-/** Despacho a cobrar: gratis al retirar o con subtotal desde $40.000. */
-export function despacho(zona: Zona, sub: number): number {
-  return zona.fee === 0 || sub >= ENVIO_GRATIS_DESDE ? 0 : zona.fee;
+/** Despacho a cobrar: gratis al retirar o con subtotal desde `gratisDesde` (0 = nunca gratis). */
+export function despacho(zona: Zona, sub: number, gratisDesde: number = ENVIO_GRATIS_DESDE): number {
+  return zona.fee === 0 || (gratisDesde > 0 && sub >= gratisDesde) ? 0 : zona.fee;
 }
+
+export interface Reglas {
+  /** Desde este subtotal el despacho es gratis; 0 = nunca. */
+  gratisDesde: number;
+  /** Porcentaje del total que se abona para reservar. */
+  abonoPct: number;
+}
+
+export const REGLAS_INICIALES: Reglas = { gratisDesde: ENVIO_GRATIS_DESDE, abonoPct: 50 };
 
 export interface Resumen {
   subtotal: number;
   despacho: number;
   total: number;
-  /** 50 % para reservar. */
+  /** Lo que se abona para reservar (abonoPct del total). */
   abono: number;
   gratis: boolean;
   faltaParaGratis: number;
 }
 
-export function resumen(products: readonly ConPrecio[], q: Cantidades, zona: Zona): Resumen {
+export function resumen(products: readonly ConPrecio[], q: Cantidades, zona: Zona, reglas: Reglas = REGLAS_INICIALES): Resumen {
   const sub = subtotal(products, q);
-  const fee = despacho(zona, sub);
+  const fee = despacho(zona, sub, reglas.gratisDesde);
   const total = sub + fee;
+  const conGratis = reglas.gratisDesde > 0;
   return {
     subtotal: sub,
     despacho: fee,
     total,
-    abono: Math.round(total / 2),
-    gratis: sub >= ENVIO_GRATIS_DESDE,
-    faltaParaGratis: Math.max(0, ENVIO_GRATIS_DESDE - sub),
+    abono: Math.round((total * reglas.abonoPct) / 100),
+    gratis: conGratis && sub >= reglas.gratisDesde,
+    faltaParaGratis: conGratis ? Math.max(0, reglas.gratisDesde - sub) : 0,
   };
 }
 
 export interface Extras {
+  nombre?: string;
   fecha?: string;
   codigo?: string;
   dedicatoria?: string;
 }
 
 /** Texto del pedido que se envía por WhatsApp. */
-export function mensajePedido(products: readonly ConPrecio[], q: Cantidades, zona: Zona, extras: Extras = {}): string {
+export function mensajePedido(products: readonly ConPrecio[], q: Cantidades, zona: Zona, extras: Extras = {}, reglas: Reglas = REGLAS_INICIALES): string {
   const items = products.filter((p) => q[p.id]).map((p) => `${q[p.id]} x ${p.name}`);
-  const r = resumen(products, q, zona);
+  const r = resumen(products, q, zona, reglas);
   const partes = [`Hola Bloom, quiero hacer este pedido: ${items.join(", ")}.`, `Entrega: ${zona.label}.`];
+  if (extras.nombre?.trim()) partes.push(`Nombre: ${extras.nombre.trim()}.`);
   if (extras.fecha) partes.push(`Fecha: ${fechaLarga(extras.fecha)}.`);
   if (extras.codigo?.trim()) partes.push(`Código de descuento: ${extras.codigo.trim().toUpperCase()}.`);
   if (extras.dedicatoria?.trim()) partes.push(`Dedicatoria: ${extras.dedicatoria.trim()}.`);
@@ -90,9 +102,13 @@ export function fechaLarga(iso: string): string {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
-/** Fecha mínima de entrega (mañana) en formato de <input type="date">. */
-export function fechaMinima(hoy: Date = new Date()): string {
-  const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+/** Fecha mínima de entrega, `horas` después de ahora, en formato de <input type="date">. */
+export function fechaMinima(hoy: Date = new Date(), horas = 24): string {
+  return ymd(new Date(hoy.getTime() + Math.max(0, horas) * 3600_000));
+}
+
+/** Fecha local en formato "2026-10-29". */
+export function ymd(d: Date): string {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${mm}-${dd}`;

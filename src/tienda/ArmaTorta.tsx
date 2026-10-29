@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { STEPS, WHATSAPP, type ParteTorta } from "../data/tienda";
+import { STEPS, type ParteTorta } from "../data/tienda";
 import { linkWhatsApp } from "../core/cart";
 import { Gatito } from "../ui/Logo";
 import { Eyebrow, externo } from "./comun";
+import { useTienda } from "./contexto";
 
 const NUMERO = "flex size-[30px] flex-none items-center justify-center rounded-full bg-rose text-[13px] font-semibold text-rose-ink";
 
 export function ArmaTorta({ cake, onCake }: { cake: Record<ParteTorta, string>; onCake: (c: Record<ParteTorta, string>) => void }) {
   const [deco, setDeco] = useState("");
+  const { config } = useTienda();
   const partes = STEPS.map((st) => `${st.title}: ${cake[st.key]}`);
   if (deco.trim()) partes.push(`Decoración: ${deco.trim()}`);
-  const href = linkWhatsApp(WHATSAPP, "Hola Bloom, quiero cotizar una torta: " + partes.join(" · "));
+  const href = linkWhatsApp(config.whatsapp, "Hola Bloom, quiero cotizar una torta: " + partes.join(" · "));
 
   return (
     <section id="arma" className="mx-auto flex max-w-[1180px] flex-col gap-[26px] px-6 py-[72px]">

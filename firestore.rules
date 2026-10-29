@@ -1,15 +1,40 @@
 rules_version = '2';
 
 /* Reglas de Bloom Pastelería (mismo esquema que la tienda Shop).
-   - enlaces/bloom: dirección corta que lleva de la tienda al uid de la dueña.
-   - tiendas/{uid}/fotos: fotos de los productos, achicadas. Las ve cualquiera
-     (la tienda pública); solo la dueña las sube, cambia o borra.
-   - Todo lo demás de tiendas/{uid} es privado de la dueña. */
+   Cada cuenta de Google es dueña de su árbol tiendas/{uid}: solo ella lee y escribe su gestión.
+   El público (la tienda) solo puede leer la Configuración, el catálogo y las fotos, y dejar un pedido. */
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function esDueno(uid) {
       return request.auth != null && request.auth.uid == uid;
+    }
+
+    function texto(d, campo, max) {
+      return !(campo in d) || (d[campo] is string && d[campo].size() <= max);
+    }
+
+    function numero(d, campo) {
+      return !(campo in d) || (d[campo] is number && d[campo] >= 0 && d[campo] <= 100000000);
+    }
+
+    /* pedido que deja un cliente desde la tienda: solo estos campos, con tamaños acotados */
+    function pedidoValido() {
+      let d = request.resource.data;
+      return d.keys().hasAll(['cliente', 'whatsapp', 'items', 'estado'])
+        && d.keys().hasOnly(['cliente', 'whatsapp', 'items', 'producto', 'precio', 'abono', 'fecha', 'entrega',
+                             'notas', 'canal', 'estado', 'origen', 'nuevo', 'urgente', 'creado'])
+        && d.cliente is string && d.cliente.size() > 0 && d.cliente.size() <= 120
+        && d.whatsapp is string && d.whatsapp.size() > 0 && d.whatsapp.size() <= 40
+        && d.items is list && d.items.size() > 0 && d.items.size() <= 50
+        && d.estado == 'pendiente'
+        && (!('origen' in d) || d.origen == 'tienda')
+        && (!('nuevo' in d) || d.nuevo == true)
+        && (!('urgente' in d) || d.urgente == false)
+        && (!('canal' in d) || d.canal == 'Web')
+        && texto(d, 'producto', 300) && texto(d, 'entrega', 200) && texto(d, 'notas', 300)
+        && texto(d, 'fecha', 10) && texto(d, 'creado', 40)
+        && numero(d, 'precio') && numero(d, 'abono');
     }
 
     /* dirección corta: pública para leer; solo su dueña la crea, cambia o borra */
@@ -25,9 +50,22 @@ service cloud.firestore {
     }
 
     match /tiendas/{uid} {
+      /* ajustes privados */
       allow read, write: if esDueno(uid);
 
-      /* fotos de productos: { img: data URL jpg, actualizado: fecha }, bajo 1 MB por documento */
+      /* Configuración de la tienda (publico/tienda): la ve la tienda, la cambia la dueña */
+      match /publico/{docId} {
+        allow read: if true;
+        allow write: if esDueno(uid);
+      }
+
+      /* catálogo: lo ve la tienda, lo cambia la dueña */
+      match /catalogo/{docId} {
+        allow read: if true;
+        allow write: if esDueno(uid);
+      }
+
+      /* fotos de productos: { img: data URL jpg, actualizado }, bajo 1 MB por documento */
       match /fotos/{docId} {
         allow read: if true;
         allow create, update: if esDueno(uid)
@@ -37,7 +75,13 @@ service cloud.firestore {
         allow delete: if esDueno(uid);
       }
 
-      /* cualquier otra colección futura: solo la dueña */
+      /* pedidos: cualquiera puede dejar uno desde la tienda; solo la dueña los lee, cambia o borra */
+      match /pedidos/{docId} {
+        allow read, update, delete: if esDueno(uid);
+        allow create: if esDueno(uid) || pedidoValido();
+      }
+
+      /* recetas, clientes, insumos y cualquier otra colección: solo la dueña */
       match /{coleccion}/{docId} {
         allow read, write: if esDueno(uid);
       }

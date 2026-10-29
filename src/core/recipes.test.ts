@@ -4,7 +4,7 @@ import { RECIPES } from "../data/gestion";
 
 describe("recetas", () => {
   it("suma el costo de los ingredientes", () => {
-    expect(costoReceta([["Huevos", "10 unid", 2500], ["Harina", "300 g", 450]])).toBe(2950);
+    expect(costoReceta([{ name: "Huevos", qty: "10 unid", cost: 2500 }, { name: "Harina", qty: "300 g", cost: 450 }])).toBe(2950);
   });
   it("calcula costo por porción y margen", () => {
     expect(costoPorPorcion(16500, 22)).toBe(750);

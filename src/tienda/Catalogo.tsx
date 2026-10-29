@@ -1,13 +1,17 @@
-import { CATS, PRODUCTS, TAG_STYLE, TINTS, type Producto } from "../data/productos";
+import { TAG_STYLE, TINTS, categorias, type Producto } from "../data/productos";
+import type { Etiqueta } from "../core/modelo";
 import type { Cantidades } from "../core/cart";
 import { clp } from "../core/money";
 import { BigPan, BigPie, BigPostre, BigTorta } from "../ui/icons";
 import { Eyebrow, chip } from "./comun";
+import { useTienda } from "./contexto";
 
 const ILUSTRACION = { torta: BigTorta, pie: BigPie, postre: BigPostre, pan: BigPan };
 
-export function Catalogo({ cat, onCat, qty, onAdd, fotos }: { cat: string; onCat: (c: string) => void; qty: Cantidades; onAdd: (p: Producto) => void; fotos: Record<string, string> }) {
-  const shown = PRODUCTS.filter((p) => cat === "Todo" || p.cat === cat);
+export function Catalogo({ cat, onCat, qty, onAdd }: { cat: string; onCat: (c: string) => void; qty: Cantidades; onAdd: (p: Producto) => void }) {
+  const { productos, fotos, config } = useTienda();
+  const CATS = ["Todo", ...categorias(productos)];
+  const shown = productos.filter((p) => cat === "Todo" || p.cat === cat);
   return (
     <section id="catalogo" className="mx-auto flex max-w-[1180px] flex-col gap-7 px-6 py-[72px]">
       <div className="flex flex-wrap items-end justify-between gap-[18px]">
@@ -34,12 +38,14 @@ export function Catalogo({ cat, onCat, qty, onAdd, fotos }: { cat: string; onCat
         {shown.map((p) => {
           const q = qty[p.id] ?? 0;
           const Ilus = ILUSTRACION[p.kind];
+          const tags: Etiqueta[] = p.disponible ? p.tags : ["Agotado"];
+          const puede = p.disponible && config.abierta;
           return (
             <article key={p.id} className="flex flex-col overflow-hidden rounded-3xl border border-line bg-paper">
               <div className="relative flex h-[170px] items-center justify-center text-cocoa" style={{ background: TINTS[p.kind] }}>
                 {fotos[p.id] ? <img src={fotos[p.id]} alt={`Foto de ${p.name}`} className="absolute inset-0 size-full object-cover" /> : <Ilus size={70} />}
                 <div className="absolute top-3 right-3 left-3 flex flex-wrap gap-1.5">
-                  {p.tags.map((t) => (
+                  {tags.map((t) => (
                     <span key={t} className="rounded-[11px] px-2.5 py-1 text-[11px] font-semibold" style={{ background: TAG_STYLE[t][0], color: TAG_STYLE[t][1] }}>
                       {t}
                     </span>
@@ -56,11 +62,12 @@ export function Catalogo({ cat, onCat, qty, onAdd, fotos }: { cat: string; onCat
                   <button
                     type="button"
                     onClick={() => onAdd(p)}
-                    aria-label={`Agregar ${p.name} al pedido`}
-                    className="min-h-11 rounded-[22px] border-none px-[18px] text-[14px] font-medium transition-colors"
-                    style={q > 0 ? { background: "#E6EAD2", color: "#3F4A1F" } : { background: "#6B4A33", color: "#FCF7EC" }}
+                    disabled={!puede}
+                    aria-label={puede ? `Agregar ${p.name} al pedido` : `${p.name}: ${p.disponible ? "tienda cerrada" : "agotado"}`}
+                    className="min-h-11 rounded-[22px] border-none px-[18px] text-[14px] font-medium transition-colors disabled:cursor-not-allowed"
+                    style={!puede ? { background: "#ECE6DC", color: "#5E5248" } : q > 0 ? { background: "#E6EAD2", color: "#3F4A1F" } : { background: "#6B4A33", color: "#FCF7EC" }}
                   >
-                    {q > 0 ? `En tu caja · ${q}` : "Agregar"}
+                    {!p.disponible ? "Agotado" : !config.abierta ? "Tienda cerrada" : q > 0 ? `En tu caja · ${q}` : "Agregar"}
                   </button>
                 </div>
               </div>
