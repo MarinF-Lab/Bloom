@@ -13,4 +13,6 @@ ext {
     androidxJunitVersion = '1.2.1'
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
+    // Inicio de sesión nativo con Google (@capacitor-firebase/authentication).
+    rgcfaIncludeGoogle = true
 }

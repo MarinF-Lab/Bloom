@@ -2,7 +2,9 @@
 // falta (como en la tienda Shop). Los valores son públicos; lo que protege los datos son las reglas
 // de Firestore (firestore.rules).
 
+import { registerPlugin } from "@capacitor/core";
 import { FOTO_LIMITE, FOTO_MAX, calidades, idFoto, medidasAchicadas } from "../core/fotos";
+import { enApp } from "../plataforma";
 
 const FIREBASE = {
   apiKey: "AIzaSyAOdtiD0mRI_xRe0CwovqbZ9nux_rEs4eY",
@@ -118,13 +120,34 @@ export async function escucharSesion(cb: (u: Usuario | null) => void): Promise<(
   return f.auth().onAuthStateChanged(cb);
 }
 
+const enAndroid = () => enApp();
+
+/** Plugin nativo @capacitor-firebase/authentication. Se registra sin su parte web
+    (que traería otro SDK de Firebase entero): solo se usa dentro de la app de Android. */
+interface AuthNativa {
+  signInWithGoogle(): Promise<{ credential?: { idToken?: string } | null }>;
+  signOut(): Promise<void>;
+}
+let pluginNativo: AuthNativa | null = null;
+const nativo = async (): Promise<AuthNativa> => (pluginNativo ??= registerPlugin<AuthNativa>("FirebaseAuthentication"));
+
 export async function entrar(): Promise<void> {
   const f = await iniciar(true);
+  if (enAndroid()) {
+    // Google no deja usar la ventana web dentro de la app: se entra con la cuenta del teléfono
+    // y con ese token se abre la misma sesión de Firebase que usa la web.
+    const r = await (await nativo()).signInWithGoogle();
+    const idToken = r.credential?.idToken;
+    if (!idToken) throw Object.assign(new Error("Sin token de Google"), { code: "auth/sin-token" });
+    await f.auth().signInWithCredential(f.auth.GoogleAuthProvider.credential(idToken));
+    return;
+  }
   await f.auth().signInWithPopup(new f.auth.GoogleAuthProvider());
 }
 
 export async function salir(): Promise<void> {
   const f = await iniciar(true);
+  if (enAndroid()) await (await nativo()).signOut().catch(() => {});
   await f.auth().signOut();
 }
 

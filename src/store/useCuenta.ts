@@ -5,8 +5,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { almacenCuenta, almacenEjemplo, iniciarCuenta, type Almacen } from "./almacen";
 import { entrar, escucharSesion, reclamarEnlace, salir, type Usuario } from "./firebase";
+import { enApp } from "../plataforma";
 
-export const enAndroid = () => "Capacitor" in window;
+export const enAndroid = () => enApp();
 
 /** Solo para pruebas en el computador (localhost/?prueba): datos en memoria, sin Firebase. */
 const modoPrueba = () => /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has("prueba");
@@ -20,14 +21,12 @@ export type Sesion =
 export const NO_ES_LA_DUENA = "Esta gestión es solo para la dueña de Bloom. Entra con la cuenta de Google de la tienda.";
 
 export function useCuenta() {
-  const [sesion, setSesion] = useState<Sesion>(() =>
-    modoPrueba() ? { modo: "prueba", almacen: almacenEjemplo() } : enAndroid() ? { modo: "fuera" } : { modo: "cargando" },
-  );
+  const [sesion, setSesion] = useState<Sesion>(() => (modoPrueba() ? { modo: "prueba", almacen: almacenEjemplo() } : { modo: "cargando" }));
   const [aviso, setAviso] = useState("");
   const rechazada = useRef(false);
 
   useEffect(() => {
-    if (modoPrueba() || enAndroid()) return; // En Android Google no deja iniciar sesión dentro de la app.
+    if (modoPrueba()) return;
     let vivo = true;
     let quitar: (() => void) | undefined;
     escucharSesion(async (u) => {
@@ -75,7 +74,10 @@ export function useCuenta() {
       await entrar();
     } catch (e) {
       const code = (e as { code?: string }).code ?? "";
-      if (code === "auth/unauthorized-domain") setAviso("Este sitio todavía no está autorizado en Firebase (Authentication → Settings → Authorized domains).");
+      const msg = String((e as { message?: string }).message ?? "");
+      if (/cancel/i.test(msg) || code === "auth/sin-token") return; // la persona cerró el selector de cuentas
+      if (enAndroid() && /developer|10:|DEVELOPER_ERROR|No credentials/i.test(msg)) setAviso("Google no reconoce esta app. Revisa que la huella SHA-1 esté agregada en Firebase (app Android).");
+      else if (code === "auth/unauthorized-domain") setAviso("Este sitio todavía no está autorizado en Firebase (Authentication → Settings → Authorized domains).");
       else if (code === "auth/operation-not-allowed") setAviso("Falta habilitar el acceso con Google en Firebase (Authentication → Sign-in method).");
       else if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") setAviso("No pude iniciar sesión con Google.");
     }
