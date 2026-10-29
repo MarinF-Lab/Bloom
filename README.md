@@ -41,7 +41,7 @@ En la [consola de Firebase](https://console.firebase.google.com/project/bloom-52
 
 En la app de Android Google no deja iniciar sesión con la ventana web: ahí la gestión ofrece abrirse en el navegador.
 
-Para probar la gestión en el computador sin Firebase: `npm run dev` y abrir `http://localhost:5173/?prueba` (datos en memoria; solo funciona en `localhost`).
+Para probar la gestión en el computador sin Firebase: `npm run dev` y abrir `http://localhost:5173/?gestion&prueba` (datos en memoria; solo funciona en `localhost`).
 
 ## Publicación
 
