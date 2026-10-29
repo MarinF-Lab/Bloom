@@ -9,11 +9,13 @@ import "@fontsource/poppins/latin-500.css";
 import "@fontsource/poppins/latin-600.css";
 import "./index.css";
 import { App } from "./App";
+import { enPaginaGestion } from "./core/vista";
 
 // App instalable: el service worker solo en la página publicada (https), no en el visor de claude.ai
 // ni dentro de la app de Android (que ya trae todo).
 const inClaude = /claude\.ai|claudeusercontent/.test(location.hostname) || window.top !== window || "Capacitor" in window;
-if ("serviceWorker" in navigator && location.protocol === "https:" && !inClaude) {
+// En /gestion/ no se registra: el service worker vive en la raíz y cubre toda la app desde ahí.
+if ("serviceWorker" in navigator && location.protocol === "https:" && !inClaude && !enPaginaGestion(location.pathname)) {
   addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(() => {}); });
 }
 

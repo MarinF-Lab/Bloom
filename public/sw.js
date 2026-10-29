@@ -22,10 +22,11 @@ self.addEventListener("fetch", (e) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("./index.html", copy));
+          // Cada página (tienda en la raíz, gestión en /gestion/) se guarda con su propia dirección.
+          caches.open(CACHE).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match("./index.html")),
+        .catch(() => caches.match(req).then((hit) => hit || caches.match("./index.html"))),
     );
     return;
   }

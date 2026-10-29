@@ -3,11 +3,11 @@
 Tienda pública y app de gestión de Bloom, pastelería casera en Retiro.
 
 - **Tienda** (la página principal): catálogo, caja dulce con despacho y abono del 50 %, "Arma tu torta", packs, encargos y preguntas frecuentes. Los pedidos llegan por WhatsApp.
-- **App de gestión** (`#gestion`, y lo que abre la app de Android): pedidos del día con cupos, agenda, catálogo, recetas con costo y margen, clientes, insumos y resumen. Los pedidos, la agenda y las cifras son de ejemplo.
+- **App de gestión** ([`/gestion/`](https://marinf-lab.github.io/Bloom/gestion/), y lo que abre la app de Android): pedidos del día con cupos, agenda, catálogo, recetas con costo y margen, clientes, insumos y resumen. Los pedidos, la agenda y las cifras son de ejemplo.
 
 ## Comandos
 
-- `npm run dev`: abre la app para trabajar (`http://localhost:5173`, gestión en `/#gestion`).
+- `npm run dev`: abre la app para trabajar (`http://localhost:5173`, gestión en `/?gestion`).
 - `npm test`: pruebas de la lógica (`src/core`).
 - `npm run build`: compila un solo HTML en `dist/`.
 - `npm run artifact`: compila un solo HTML en `artifact/index.html`, listo para publicar como artefacto.
