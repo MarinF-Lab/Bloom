@@ -5,19 +5,15 @@ const B = "https://marinf-lab.github.io/Bloom/";
 
 describe("vistaInicial", () => {
   it("abre la tienda en la raíz de la web", () => {
-    expect(vistaInicial(B, false)).toBe("tienda");
-    expect(vistaInicial(B + "#catalogo", false)).toBe("tienda");
+    expect(vistaInicial(B)).toBe("tienda");
+    expect(vistaInicial(B + "#catalogo")).toBe("tienda");
   });
   it("abre la gestión con /gestion/, #gestion o ?gestion", () => {
-    expect(vistaInicial(B + "gestion/", false)).toBe("gestion");
-    expect(vistaInicial(B + "gestion", false)).toBe("gestion");
-    expect(vistaInicial(B + "gestion/index.html", false)).toBe("gestion");
-    expect(vistaInicial(B + "#gestion", false)).toBe("gestion");
-    expect(vistaInicial(B + "?gestion", false)).toBe("gestion");
-  });
-  it("en la app de Android abre la gestión, salvo #tienda", () => {
-    expect(vistaInicial("https://localhost/", true)).toBe("gestion");
-    expect(vistaInicial("https://localhost/#tienda", true)).toBe("tienda");
+    expect(vistaInicial(B + "gestion/")).toBe("gestion");
+    expect(vistaInicial(B + "gestion")).toBe("gestion");
+    expect(vistaInicial(B + "gestion/index.html")).toBe("gestion");
+    expect(vistaInicial(B + "#gestion")).toBe("gestion");
+    expect(vistaInicial(B + "?gestion")).toBe("gestion");
   });
 });
 

@@ -1,13 +1,9 @@
-// Sesión de la gestión: solo la dueña de Bloom. La dueña es la cuenta de Google vinculada a la
-// tienda (enlaces/bloom): la primera que entra. Cualquier otra cuenta queda fuera; las reglas de
-// Firestore lo hacen cumplir también.
+// Sesión de la gestión: solo la dueña de Bloom, con la cuenta de Google bloompasteleriacl@gmail.com.
+// Cualquier otra cuenta queda fuera; las reglas de Firestore lo hacen cumplir también.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { almacenCuenta, almacenEjemplo, iniciarCuenta, type Almacen } from "./almacen";
-import { entrar, escucharSesion, reclamarEnlace, salir, type Usuario } from "./firebase";
-import { enApp } from "../plataforma";
-
-export const enAndroid = () => enApp();
+import { CORREO_DUENA, entrar, escucharSesion, esLaDuena, reclamarEnlace, salir, type Usuario } from "./firebase";
 
 /** Solo para pruebas en el computador (localhost/?prueba): datos en memoria, sin Firebase. */
 const modoPrueba = () => /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has("prueba");
@@ -18,7 +14,7 @@ export type Sesion =
   | { modo: "prueba"; almacen: Almacen }
   | { modo: "cuenta"; usuario: Usuario; almacen: Almacen };
 
-export const NO_ES_LA_DUENA = "Esta gestión es solo para la dueña de Bloom. Entra con la cuenta de Google de la tienda.";
+export const NO_ES_LA_DUENA = `Esta gestión es solo para la dueña de Bloom. Entra con ${CORREO_DUENA}.`;
 
 export function useCuenta() {
   const [sesion, setSesion] = useState<Sesion>(() => (modoPrueba() ? { modo: "prueba", almacen: almacenEjemplo() } : { modo: "cargando" }));
@@ -37,14 +33,15 @@ export function useCuenta() {
       }
       setSesion({ modo: "cargando" });
       try {
-        // Primero se comprueba que sea la dueña (o se vincula, si la tienda aún no tiene dueña).
-        if (!(await reclamarEnlace(u.uid))) {
+        // Solo la cuenta de la dueña; cualquier otra se cierra antes de tocar datos.
+        if (!esLaDuena(u)) {
           rechazada.current = true;
           setAviso(NO_ES_LA_DUENA);
           await salir().catch(() => {});
           return;
         }
         rechazada.current = false;
+        await reclamarEnlace(u.uid);
         setAviso("");
         await iniciarCuenta(u.uid);
         const almacen = await almacenCuenta(u.uid);
@@ -74,10 +71,7 @@ export function useCuenta() {
       await entrar();
     } catch (e) {
       const code = (e as { code?: string }).code ?? "";
-      const msg = String((e as { message?: string }).message ?? "");
-      if (/cancel/i.test(msg) || code === "auth/sin-token") return; // la persona cerró el selector de cuentas
-      if (enAndroid() && /developer|10:|DEVELOPER_ERROR|No credentials/i.test(msg)) setAviso("Google no reconoce esta app. Revisa que la huella SHA-1 esté agregada en Firebase (app Android).");
-      else if (code === "auth/unauthorized-domain") setAviso("Este sitio todavía no está autorizado en Firebase (Authentication → Settings → Authorized domains).");
+      if (code === "auth/unauthorized-domain") setAviso("Este sitio todavía no está autorizado en Firebase (Authentication → Settings → Authorized domains).");
       else if (code === "auth/operation-not-allowed") setAviso("Falta habilitar el acceso con Google en Firebase (Authentication → Sign-in method).");
       else if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") setAviso("No pude iniciar sesión con Google.");
     }
