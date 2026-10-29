@@ -1,5 +1,6 @@
 import { SEASONS } from "../data/tienda";
 import { clp } from "../core/money";
+import { useEffect, useState } from "react";
 import { Bag, Calendar, Chat, Clock, Instagram, Sparkle, Truck } from "../ui/icons";
 import { Logo } from "../ui/Logo";
 import { Eyebrow, externo } from "./comun";
@@ -29,32 +30,41 @@ export function AvisoTemporada() {
   );
 }
 
-const NAV = [
-  ["#catalogo", "Catálogo"],
-  ["#arma", "Arma tu torta"],
-  ["#packs", "Packs"],
-  ["#encargos", "Encargos"],
-  ["#preguntas", "Preguntas"],
-] as const;
-
+/** Cabecera fija: logo grande al centro, WhatsApp a la izquierda y "Mi pedido" a la derecha. */
 export function Cabecera({ cartCount }: { cartCount: number }) {
+  const { config } = useTienda();
+  const [abajo, setAbajo] = useState(false);
+
+  // Al bajar, la cabecera se achica y muestra una sombra.
+  useEffect(() => {
+    const revisar = () => setAbajo(window.scrollY > 60);
+    revisar();
+    addEventListener("scroll", revisar, { passive: true });
+    return () => removeEventListener("scroll", revisar);
+  }, []);
+
+  const redondo = "flex size-12 items-center justify-center rounded-full transition-colors";
   return (
-    <header className="border-b border-line bg-cream">
-      <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-x-[26px] gap-y-2.5 px-6 py-3">
-        <a href="#inicio" className="flex items-center gap-2.5 text-ink">
-          <Logo className="size-[50px] rounded-full border border-line" />
-          <span className="font-display text-[30px] font-semibold italic">Bloom</span>
+    <header className={"sticky top-0 z-30 border-b border-line bg-cream/95 backdrop-blur transition-shadow " + (abajo ? "shadow-[0_4px_18px_rgba(78,52,36,0.12)]" : "")}>
+      <div className={"mx-auto grid max-w-[1180px] grid-cols-[1fr_auto_1fr] items-center px-5 transition-[padding] " + (abajo ? "py-1.5" : "py-3")}>
+        <a href={whatsappUrl(config.whatsapp)} {...externo} aria-label="Escríbenos por WhatsApp" className={redondo + " justify-self-start border border-line bg-paper text-cocoa"}>
+          <Chat size={22} />
         </a>
-        <nav aria-label="Principal" className="flex flex-1 flex-wrap gap-x-5 text-[14px]">
-          {NAV.map(([href, label]) => (
-            <a key={href} href={href} className="py-2.5">
-              {label}
-            </a>
-          ))}
-        </nav>
-        <a href="#pedido" className="flex min-h-11 items-center gap-2 rounded-[22px] bg-cocoa px-[18px] text-[14px] font-medium text-cream">
-          <Bag size={18} />
-          Mi pedido ({cartCount})
+        <a href="#inicio" aria-label={`${config.nombre} · inicio`} className="block">
+          <Logo
+            className={
+              "rounded-full border border-line bg-paper shadow-[0_2px_10px_rgba(78,52,36,0.12)] transition-[width,height] duration-200 " +
+              (abajo ? "size-[60px] sm:size-[68px]" : "size-[84px] sm:size-[104px]")
+            }
+          />
+        </a>
+        <a href="#pedido" aria-label={`Mi pedido (${cartCount})`} className={redondo + " relative justify-self-end bg-cocoa text-cream"}>
+          <Bag size={22} />
+          {cartCount > 0 && (
+            <span aria-hidden="true" className="absolute -top-1 -right-1 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-cream bg-rose-deep px-1 text-[11px] font-semibold text-paper">
+              {cartCount}
+            </span>
+          )}
         </a>
       </div>
     </header>

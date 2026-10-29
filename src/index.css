@@ -33,6 +33,8 @@
 @layer base {
   :root { color-scheme: light; }
   html { scroll-behavior: smooth; }
+  /* Las secciones no quedan tapadas por la cabecera fija al saltar a ellas. */
+  section[id], main > section { scroll-margin-top: 104px; }
   body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-sans); }
   a { color: var(--color-cocoa); }
   a:hover { color: var(--color-cocoa-dark); }
