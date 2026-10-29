@@ -1,0 +1,9 @@
+{
+  "appId": "cl.marinflab.bloom",
+  "appName": "Bloom",
+  "webDir": "dist",
+  "backgroundColor": "#FCF7EC",
+  "android": {
+    "backgroundColor": "#FCF7EC"
+  }
+}

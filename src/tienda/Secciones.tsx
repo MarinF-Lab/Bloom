@@ -1,0 +1,244 @@
+import { useState, type FormEvent } from "react";
+import { ENCARGO_TIPOS, FAQ, GAL, INSTAGRAM, PACKS, REVIEWS, WHATSAPP } from "../data/tienda";
+import { fechaLarga, linkWhatsApp } from "../core/cart";
+import { Gift, Photo } from "../ui/icons";
+import { Gatito } from "../ui/Logo";
+import { Eyebrow, H2, area, campo, externo } from "./comun";
+
+const CAJA = "mx-auto max-w-[1180px] px-6";
+
+export function Packs() {
+  return (
+    <section id="packs" className="bg-honey">
+      <div className={CAJA + " flex flex-col gap-[26px] py-16"}>
+        <div>
+          <Eyebrow className="text-honey-ink">PACKS Y CAJAS</Eyebrow>
+          <H2 className="mt-1.5">Para regalar y celebrar</H2>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-5">
+          {PACKS.map((k) => (
+            <article key={k.name} className="flex flex-col gap-2.5 rounded-3xl bg-paper p-[22px]">
+              <div className="flex size-[52px] items-center justify-center rounded-2xl bg-rose-soft text-rose-deep">
+                <Gift size={26} />
+              </div>
+              <h3 className="m-0 font-display text-[26px] font-semibold leading-[1.1]">{k.name}</h3>
+              <p className="m-0 flex-1 text-[14px] leading-[1.55] text-muted">{k.desc}</p>
+              <a
+                href={linkWhatsApp(WHATSAPP, "Hola Bloom, quiero cotizar: " + k.name)}
+                {...externo}
+                className="flex min-h-11 items-center self-start rounded-[22px] bg-cocoa px-5 text-[14px] font-medium text-cream"
+              >
+                Cotizar
+              </a>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function Encargos() {
+  const [enviado, setEnviado] = useState(false);
+
+  // El encargo se manda por WhatsApp con lo que escribió la persona.
+  function enviar(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const d = new FormData(e.currentTarget);
+    const v = (k: string) => String(d.get(k) ?? "").trim();
+    const lineas = [
+      `Hola Bloom, quiero hacer un encargo: ${v("tipo")}.`,
+      v("nombre") && `Nombre: ${v("nombre")}.`,
+      v("telefono") && `Teléfono: ${v("telefono")}.`,
+      v("fecha") && `Fecha: ${fechaLarga(v("fecha"))}.`,
+      v("detalle") && `Idea: ${v("detalle")}`,
+    ].filter(Boolean);
+    window.open(linkWhatsApp(WHATSAPP, lineas.join(" ")), "_blank", "noopener");
+    setEnviado(true);
+  }
+
+  return (
+    <section id="encargos" className="bg-rose">
+      <div className={CAJA + " flex flex-wrap items-start gap-10 py-[72px]"}>
+        <div className="min-w-0 flex-[1_1_300px]">
+          <Eyebrow className="text-rose-ink">ENCARGOS PERSONALIZADOS</Eyebrow>
+          <H2 className="mt-1.5 mb-3">Mesas dulces y pedidos especiales</H2>
+          <p className="m-0 text-[15px] leading-[1.65] text-[#6B3A48]">Cumpleaños, baby showers, matrimonios o un antojo. Cuéntanos la idea y la diseñamos contigo.</p>
+        </div>
+        <form onSubmit={enviar} className="grid min-w-0 flex-[1.4_1_420px] grid-cols-1 gap-4 rounded-[28px] bg-paper p-[26px] sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="enc-nombre" className="text-[13px] font-medium">Nombre</label>
+            <input id="enc-nombre" name="nombre" type="text" autoComplete="name" className={campo} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="enc-tel" className="text-[13px] font-medium">Teléfono</label>
+            <input id="enc-tel" name="telefono" type="tel" autoComplete="tel" placeholder="+56 9" className={campo} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="enc-tipo" className="text-[13px] font-medium">¿Qué necesitas?</label>
+            <select id="enc-tipo" name="tipo" className={campo + " px-3"}>
+              {ENCARGO_TIPOS.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="enc-fecha" className="text-[13px] font-medium">Fecha</label>
+            <input id="enc-fecha" name="fecha" type="date" className={campo} />
+          </div>
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <label htmlFor="enc-detalle" className="text-[13px] font-medium">Cuéntanos tu idea</label>
+            <textarea id="enc-detalle" name="detalle" rows={3} placeholder="Cantidad de personas, sabores, colores, temática…" className={area} />
+          </div>
+          <div className="flex flex-wrap items-center gap-3.5 sm:col-span-2">
+            <button type="submit" className="min-h-[50px] rounded-[25px] border-none bg-rose-deep px-7 text-[15px] font-medium text-paper">
+              Enviar encargo
+            </button>
+            {enviado && <span role="status" className="text-[14px] font-medium text-olive-ink">¡Gracias! Te escribiremos para confirmar tu encargo.</span>}
+          </div>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+export function Galeria() {
+  return (
+    <section id="galeria" className={CAJA + " flex flex-col gap-6 py-[72px]"}>
+      <div>
+        <Eyebrow>GALERÍA</Eyebrow>
+        <H2 className="mt-1.5">Pedidos que ya florecieron</H2>
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
+        {GAL.map((bg, i) => (
+          <div key={i} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[20px] text-[12px] text-muted" style={{ background: bg }}>
+            <Photo size={28} />
+            [Foto de pedido]
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function Opiniones() {
+  return (
+    <section id="opiniones" className="bg-olive-soft">
+      <div className={CAJA + " flex flex-col gap-6 py-16"}>
+        <div>
+          <Eyebrow className="text-olive-ink">OPINIONES</Eyebrow>
+          <H2 className="mt-1.5">Lo que dicen nuestros clientes</H2>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[18px]">
+          {REVIEWS.map((product) => (
+            <figure key={product} className="m-0 flex flex-col gap-3 rounded-[22px] bg-paper p-[22px]">
+              <div aria-hidden="true" className="font-display text-[48px] leading-[0.6] text-rose-deep">“</div>
+              <blockquote className="m-0 text-[15px] leading-[1.6] text-muted">[Opinión real de un cliente]</blockquote>
+              <figcaption className="text-[13px] font-semibold">[Nombre del cliente] · {product}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function Sobre() {
+  return (
+    <section id="sobre" className={CAJA + " flex flex-wrap items-center gap-9 py-[72px]"}>
+      <Gatito width={220} alt="Gatito dormido del logo de Bloom" className="rounded-[28px] bg-cream" />
+      <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-3">
+        <Eyebrow>SOBRE MÍ</Eyebrow>
+        <H2>Hecho con amor en Retiro</H2>
+        <p className="m-0 max-w-[600px] text-[16px] leading-[1.7] text-muted">
+          Bloom es una pastelería casera y personalizada, hecha con amor en Retiro. Cada torta, pie y postre se prepara por encargo para tus momentos especiales.
+        </p>
+        <p className="m-0 max-w-[600px] text-[14px] leading-[1.7] text-faint">[Tu historia: cómo empezó Bloom y qué te inspira]</p>
+      </div>
+    </section>
+  );
+}
+
+export function Preguntas() {
+  return (
+    <section id="preguntas" className="border-y border-line bg-paper">
+      <div className={CAJA + " flex flex-col gap-6 py-16"}>
+        <div>
+          <Eyebrow>PREGUNTAS FRECUENTES</Eyebrow>
+          <H2 className="mt-1.5">Antes de pedir</H2>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-4">
+          {FAQ.map((f) => (
+            <div key={f.q} className="flex flex-col gap-1.5 rounded-[20px] bg-cream px-5 py-[18px]">
+              <h3 className="m-0 text-[15px] font-semibold">{f.q}</h3>
+              <p className="m-0 text-[14px] leading-[1.6] text-muted">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function Contacto() {
+  const fila = "flex gap-2.5";
+  const etiqueta = "w-[110px] flex-none text-muted";
+  return (
+    <section id="contacto" className={CAJA + " flex flex-wrap items-stretch gap-6 py-[72px]"}>
+      <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4 rounded-[28px] border border-line bg-paper p-[26px]">
+        <Eyebrow>HORARIOS Y UBICACIÓN</Eyebrow>
+        <h2 className="m-0 font-display text-[38px] font-semibold leading-[1.05]">Te esperamos</h2>
+        <div className="flex flex-col gap-2.5 text-[15px]">
+          <div className={fila}><span className={etiqueta}>Horario</span><span>Lunes a sábado, 7:30 a 20:00</span></div>
+          <div className={fila}><span className={etiqueta}>Ubicación</span><span>Retiro, Región del Maule</span></div>
+          <div className={fila}><span className={etiqueta}>WhatsApp</span><span>+56 9 5797 3831</span></div>
+        </div>
+        <div className="flex flex-col gap-2 border-t border-line pt-3.5">
+          <div className="text-[14px] font-semibold">Despacho a domicilio</div>
+          <div className="flex justify-between text-[14px]"><span>Retiro</span><span className="font-semibold">$1.000</span></div>
+          <div className="flex justify-between text-[14px]"><span>Copihue</span><span className="font-semibold">$1.500</span></div>
+          <div className="flex justify-between text-[14px]"><span>Parral</span><span className="font-semibold">$2.000</span></div>
+          <div className="rounded-[10px] bg-olive-soft px-2.5 py-2 text-[13px] text-olive-ink">Gratis en pedidos sobre $40.000</div>
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-[1.3_1_320px] flex-col gap-4 rounded-[28px] bg-rose-soft p-[26px]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Eyebrow className="text-rose-ink">INSTAGRAM</Eyebrow>
+            <div className="font-display text-[28px] font-semibold break-words sm:text-[32px]">@_bloompasteleria.cl</div>
+          </div>
+          <a href={INSTAGRAM} {...externo} className="flex min-h-11 items-center rounded-[22px] bg-rose-deep px-5 text-[14px] font-medium text-paper">
+            Seguir
+          </a>
+        </div>
+        <div className="grid grid-cols-3 gap-2.5">
+          {GAL.map((c, i) => (
+            <div key={i} className="flex aspect-square items-center justify-center rounded-[14px] p-1.5 text-center text-[11px] text-rose-ink" style={{ background: c === "#F7DDE3" ? "#FFFDF8" : c }}>
+              [Publicación]
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function Pie() {
+  return (
+    <footer className="bg-cocoa text-cream">
+      <div className={CAJA + " flex flex-wrap items-center justify-between gap-5 py-9"}>
+        <div className="flex items-center gap-3.5">
+          <Gatito width={96} className="rounded-2xl bg-cream" />
+          <div>
+            <div className="font-display text-[30px] font-semibold italic leading-none">Bloom</div>
+            <div className="mt-1 text-[12px] text-foam">Dulces momentos que florecen</div>
+          </div>
+        </div>
+        <nav aria-label="Redes" className="flex flex-wrap gap-x-[18px] gap-y-2 text-[14px]">
+          <a href={`https://wa.me/${WHATSAPP}`} {...externo} className="py-2.5 text-cream underline">WhatsApp</a>
+          <a href={INSTAGRAM} {...externo} className="py-2.5 text-cream underline">Instagram</a>
+          <a href="#encargos" className="py-2.5 text-cream underline">Encargos</a>
+        </nav>
+        <div className="text-[12px] text-foam">© 2026 Bloom Pastelería · Retiro</div>
+      </div>
+    </footer>
+  );
+}

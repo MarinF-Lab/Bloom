@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* Diseño: pastelería casera. Crema, cacao y rosa; títulos en Cormorant Garamond, texto en Poppins. */
+@theme {
+  --color-cream: #FCF7EC;
+  --color-paper: #FFFDF8;
+  --color-ink: #4E3424;
+  --color-cocoa: #6B4A33;
+  --color-cocoa-dark: #4A3122;
+  --color-muted: #6E5644;
+  --color-faint: #8C7764;
+  --color-line: #EADFCB;
+  --color-line-2: #DCCDB8;
+  --color-sand: #F1E9DC;
+  --color-sand-2: #F6EFE3;
+  --color-latte: #EFE3D3;
+  --color-foam: #EBDCCB;
+  --color-rose: #F7DDE3;
+  --color-rose-soft: #FBEAEE;
+  --color-rose-deep: #A84F68;
+  --color-rose-ink: #7E2F47;
+  --color-olive: #5A6635;
+  --color-olive-mid: #7C8A48;
+  --color-olive-soft: #E6EAD2;
+  --color-olive-ink: #3F4A1F;
+  --color-honey: #F6E9C8;
+  --color-honey-ink: #6A4A12;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* En una capa, para que las clases de Tailwind puedan cambiar estos valores. */
+@layer base {
+  :root { color-scheme: light; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-sans); }
+  a { color: var(--color-cocoa); }
+  a:hover { color: var(--color-cocoa-dark); }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--color-rose-deep); outline-offset: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
