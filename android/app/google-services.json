@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "505748524347",
+    "project_id": "bloom-522eb",
+    "storage_bucket": "bloom-522eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505748524347:android:a25697aa4c804aadec3b1e",
+        "android_client_info": {
+          "package_name": "cl.marinflab.bloom"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "505748524347-3ojohaut5gl1upjsjfaqc86m6asos06s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0Oaxq-md_prN58iFdfrdl_TV-VmS19e0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "505748524347-3ojohaut5gl1upjsjfaqc86m6asos06s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

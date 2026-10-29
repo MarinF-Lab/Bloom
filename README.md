@@ -39,7 +39,13 @@ En la [consola de Firebase](https://console.firebase.google.com/project/bloom-52
 3. **Firestore Database → Crear base de datos** (modo producción).
 4. **Firestore → Reglas:** pegar el contenido de `firestore.rules` y **Publicar** (o `firebase deploy --only firestore:rules`). Cada vez que cambie ese archivo hay que publicarlo de nuevo.
 
-En la app de Android Google no deja iniciar sesión con la ventana web: ahí la gestión ofrece abrirse en el navegador.
+En la **app de Android** se entra con la cuenta de Google del teléfono (inicio de sesión nativo, `@capacitor-firebase/authentication`) y usa los mismos datos y reglas. Requiere, una vez, en Firebase → Configuración del proyecto → Tus apps → app Android `cl.marinflab.bloom` → **Agregar huella digital** con la SHA-1 de la firma del APK:
+
+```
+50:52:7B:0F:59:A3:96:CB:2A:E8:6E:C0:E5:B7:03:FD:46:F3:57:FF
+```
+
+El archivo `android/app/google-services.json` de esa app ya está en el repositorio (sus claves son públicas).
 
 Para probar la gestión en el computador sin Firebase: `npm run dev` y abrir `http://localhost:5173/?gestion&prueba` (datos en memoria; solo funciona en `localhost`).
 

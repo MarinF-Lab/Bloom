@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Tienda } from "./tienda/Tienda";
 import { Gestion } from "./gestion/Gestion";
 import { vistaDesdeHash, vistaInicial } from "./core/vista";
+import { enApp } from "./plataforma";
 
-const inicial = vistaInicial(location.href, "Capacitor" in window);
+const inicial = vistaInicial(location.href, enApp());
 
 export function App() {
   const [vista, setVista] = useState(inicial);
