@@ -11,7 +11,7 @@ export interface TiendaDatos {
   config: Config;
   productos: Producto[];
   fotos: Record<string, string>;
-  /** Hay una cuenta donde dejar pedidos (o el modo ejemplo). */
+  /** Hay una cuenta donde dejar pedidos. */
   conCuenta: boolean;
 }
 
@@ -28,7 +28,7 @@ export function useTiendaPublica(): TiendaDatos {
   useEffect(() => {
     const ej = ejemploActivo();
     if (ej) {
-      // Modo ejemplo en esta pestaña: la tienda muestra lo editado en la gestión.
+      // Prueba local: la tienda muestra lo editado en la gestión de esta pestaña.
       const quitar = [
         ej.escucharDoc("config", (c) => setT((x) => ({ ...x, config: normalizarConfig(c), conCuenta: true }))),
         ej.escuchar("catalogo", (rs) => setT((x) => ({ ...x, productos: orden(rs.map((r) => normalizarProducto(r.id, r))) }))),

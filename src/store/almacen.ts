@@ -1,5 +1,5 @@
 // Almacén de datos de la gestión. Las pantallas usan siempre esta interfaz; detrás puede estar
-// la cuenta (Firestore, tiendas/{uid}/…) o la memoria del navegador (modo "ver con datos de ejemplo").
+// la cuenta (Firestore, tiendas/{uid}/…) o la memoria del navegador (solo para pruebas en el computador).
 
 import { CONFIG_INICIAL, AJUSTES_INICIALES, limpio } from "../core/modelo";
 import { ymd } from "../core/fechas";
@@ -102,12 +102,12 @@ class Memoria implements Almacen {
 
 let ejemplo: Memoria | null = null;
 
-/** El almacén del modo ejemplo: uno por pestaña, se pierde al recargar. */
+/** Almacén en memoria para pruebas (localhost/?prueba): uno por pestaña, se pierde al recargar. */
 export function almacenEjemplo(): Almacen {
   return (ejemplo ??= new Memoria());
 }
 
-/** La tienda lo usa para mostrar lo editado en el modo ejemplo dentro de la misma pestaña. */
+/** En pruebas, la tienda muestra lo editado en la gestión dentro de la misma pestaña. */
 export function ejemploActivo(): Almacen | null {
   return ejemplo;
 }

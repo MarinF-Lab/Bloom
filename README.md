@@ -7,14 +7,18 @@ Tienda pública y app de gestión de Bloom, pastelería casera en Retiro.
 
 ## Comandos
 
-- `npm run dev`: abre la app para trabajar (`http://localhost:5173`, gestión en `/?gestion`).
+- `npm run dev`: abre la app para trabajar (`http://localhost:5173`; gestión en `/?gestion`, o `/?gestion&prueba` con datos de prueba).
 - `npm test`: pruebas de la lógica (`src/core`).
 - `npm run build`: compila un solo HTML en `dist/`.
 - `npm run artifact`: compila un solo HTML en `artifact/index.html`, listo para publicar como artefacto.
 
 ## Cuenta, datos y Configuración
 
-La gestión se abre con **Entrar con Google** (o **Ver con datos de ejemplo**, que no guarda nada). Con la cuenta, todo queda en Firestore, en el proyecto `bloom-522eb`, bajo `tiendas/{uid}`:
+La gestión es **solo para la dueña de Bloom** y se abre con **Entrar con Google**. La dueña es la **primera cuenta que entra**: queda vinculada en `enlaces/bloom` y desde ahí cualquier otra cuenta ve "Esta gestión es solo para la dueña de Bloom" y queda fuera. Las reglas de Firestore lo hacen cumplir: ninguna otra cuenta puede leer ni crear datos. La tienda no tiene enlaces a la gestión y `/gestion/` no aparece en buscadores.
+
+**Para cambiar de dueña:** en la consola de Firebase, Firestore → borrar el documento `enlaces/bloom`, y entrar con la cuenta nueva.
+
+Todo queda en Firestore, en el proyecto `bloom-522eb`, bajo `tiendas/{uid}`:
 
 | Dónde | Qué | Quién lo ve |
 |---|---|---|
@@ -35,7 +39,9 @@ En la [consola de Firebase](https://console.firebase.google.com/project/bloom-52
 3. **Firestore Database → Crear base de datos** (modo producción).
 4. **Firestore → Reglas:** pegar el contenido de `firestore.rules` y **Publicar** (o `firebase deploy --only firestore:rules`). Cada vez que cambie ese archivo hay que publicarlo de nuevo.
 
-En la app de Android Google no deja iniciar sesión con la ventana web: ahí la gestión ofrece abrirse en el navegador o el modo ejemplo.
+En la app de Android Google no deja iniciar sesión con la ventana web: ahí la gestión ofrece abrirse en el navegador.
+
+Para probar la gestión en el computador sin Firebase: `npm run dev` y abrir `http://localhost:5173/?prueba` (datos en memoria; solo funciona en `localhost`).
 
 ## Publicación
 

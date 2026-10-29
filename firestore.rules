@@ -1,13 +1,25 @@
 rules_version = '2';
 
 /* Reglas de Bloom Pastelería (mismo esquema que la tienda Shop).
-   Cada cuenta de Google es dueña de su árbol tiendas/{uid}: solo ella lee y escribe su gestión.
-   El público (la tienda) solo puede leer la Configuración, el catálogo y las fotos, y dejar un pedido. */
+   La gestión es solo de la dueña: la cuenta vinculada en enlaces/bloom (la primera que entra).
+   Ninguna otra cuenta puede leer ni crear datos. El público (la tienda) solo puede leer la
+   Configuración, el catálogo y las fotos, y dejar un pedido en la tienda de la dueña.
+   Para cambiar de dueña: borrar enlaces/bloom en la consola y entrar con la cuenta nueva. */
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function enlaceBloom() {
+      return /databases/$(database)/documents/enlaces/bloom;
+    }
+
+    /* uid de la tienda vinculada a la dirección corta "bloom" */
+    function esLaTienda(uid) {
+      return exists(enlaceBloom()) && get(enlaceBloom()).data.uid == uid;
+    }
+
+    /* la dueña: sesión iniciada con la cuenta vinculada a la tienda */
     function esDueno(uid) {
-      return request.auth != null && request.auth.uid == uid;
+      return request.auth != null && request.auth.uid == uid && esLaTienda(uid);
     }
 
     function texto(d, campo, max) {
@@ -37,10 +49,11 @@ service cloud.firestore {
         && numero(d, 'precio') && numero(d, 'abono');
     }
 
-    /* dirección corta: pública para leer; solo su dueña la crea, cambia o borra */
+    /* dirección corta: pública para leer; se crea una sola vez (la primera cuenta que entra queda
+       como dueña) y solo su dueña la cambia o borra */
     match /enlaces/{nombre} {
       allow read: if true;
-      allow create: if request.auth != null
+      allow create: if nombre == 'bloom' && request.auth != null
         && request.resource.data.keys().hasOnly(['uid'])
         && request.resource.data.uid == request.auth.uid;
       allow update: if request.auth != null && resource.data.uid == request.auth.uid
@@ -78,7 +91,7 @@ service cloud.firestore {
       /* pedidos: cualquiera puede dejar uno desde la tienda; solo la dueña los lee, cambia o borra */
       match /pedidos/{docId} {
         allow read, update, delete: if esDueno(uid);
-        allow create: if esDueno(uid) || pedidoValido();
+        allow create: if esDueno(uid) || (esLaTienda(uid) && pedidoValido());
       }
 
       /* recetas, clientes, insumos y cualquier otra colección: solo la dueña */

@@ -27,13 +27,13 @@ const TABS: { key: Tab; label: string; icon: ReactNode }[] = [
   { key: "mas", label: "Más", icon: <Dots /> },
 ];
 
-/** App de gestión: entrar con Google (o modo ejemplo) y trabajar con los datos de la cuenta. */
+/** App de gestión: solo la dueña de Bloom, con su cuenta de Google. */
 export function Gestion() {
   const c = useCuenta();
-  if (c.sesion.modo === "cuenta" || c.sesion.modo === "ejemplo") {
-    return <Panel sesion={c.sesion} avisoCuenta={c.aviso} onEntrar={c.iniciarSesion} onSalir={c.cerrarSesion} />;
+  if (c.sesion.modo === "cuenta" || c.sesion.modo === "prueba") {
+    return <Panel sesion={c.sesion} avisoCuenta={c.aviso} onSalir={c.cerrarSesion} />;
   }
-  return <Entrar cargando={c.sesion.modo === "cargando"} aviso={c.aviso} onEntrar={c.iniciarSesion} onEjemplo={c.verEjemplo} />;
+  return <Entrar cargando={c.sesion.modo === "cargando"} aviso={c.aviso} onEntrar={c.iniciarSesion} />;
 }
 
 type Hojita =
@@ -43,10 +43,9 @@ type Hojita =
   | { tipo: "receta"; r: Receta; nueva: boolean }
   | null;
 
-function Panel({ sesion, avisoCuenta, onEntrar, onSalir }: {
-  sesion: Extract<Sesion, { modo: "cuenta" | "ejemplo" }>;
+function Panel({ sesion, avisoCuenta, onSalir }: {
+  sesion: Extract<Sesion, { modo: "cuenta" | "prueba" }>;
   avisoCuenta: string;
-  onEntrar: () => void;
   onSalir: () => void;
 }) {
   const d = useDatos(sesion.almacen);
@@ -77,12 +76,6 @@ function Panel({ sesion, avisoCuenta, onEntrar, onSalir }: {
         </header>
 
         <main className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-[18px] pt-3.5 pb-[22px]">
-          {sesion.modo === "ejemplo" && (
-            <div className="flex items-center gap-2 rounded-2xl bg-honey px-3.5 py-2.5 text-[12px] text-honey-ink">
-              <span className="min-w-0 flex-1">Modo ejemplo: los cambios se pierden al recargar.</span>
-              <button type="button" onClick={onEntrar} className="min-h-9 flex-none rounded-[18px] border-none bg-honey-ink px-3 text-[12px] font-semibold text-paper">Entrar con Google</button>
-            </div>
-          )}
           {aviso && <div role="status" className="rounded-xl bg-rose-soft px-3 py-2 text-[13px] text-rose-ink">{aviso}</div>}
           {!d.listo ? (
             <div role="status" className="py-10 text-center text-[14px] text-muted">Cargando tus datos…</div>

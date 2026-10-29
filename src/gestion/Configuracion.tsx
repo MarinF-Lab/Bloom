@@ -9,7 +9,7 @@ import { Trash } from "../ui/icons";
 /** Configuración compartida: se edita aquí y la tienda la muestra. */
 export function Configuracion({ config, sesion, onGuardar, onSalir, onCerrar }: {
   config: Config;
-  sesion: Extract<Sesion, { modo: "cuenta" | "ejemplo" }>;
+  sesion: Extract<Sesion, { modo: "cuenta" | "prueba" }>;
   onGuardar: (c: Config) => Promise<void>;
   onSalir: () => void;
   onCerrar: () => void;
@@ -80,12 +80,12 @@ export function Configuracion({ config, sesion, onGuardar, onSalir, onCerrar }: 
 
       <Seccion titulo="Cuenta">
         {sesion.modo === "cuenta" ? (
-          <p className="m-0 text-[14px]">Entraste como <strong className="font-semibold">{sesion.usuario.email ?? sesion.usuario.displayName}</strong>. Tus datos quedan en tu cuenta.</p>
+          <p className="m-0 text-[14px]">Entraste como <strong className="font-semibold">{sesion.usuario.email ?? sesion.usuario.displayName}</strong>. Solo esta cuenta puede abrir la gestión.</p>
         ) : (
-          <p className="m-0 text-[14px]">Estás en el <strong className="font-semibold">modo ejemplo</strong>: los cambios se pierden al recargar.</p>
+          <p className="m-0 text-[14px]">Modo de prueba local: los cambios se pierden al recargar.</p>
         )}
         <a href={WEB_TIENDA} target="_blank" rel="noopener noreferrer" className="text-[14px] font-medium underline">Ver la tienda</a>
-        <button type="button" onClick={onSalir} className={BOTON_SECUNDARIO}>{sesion.modo === "cuenta" ? "Cerrar sesión" : "Salir del modo ejemplo"}</button>
+        <button type="button" onClick={onSalir} className={BOTON_SECUNDARIO}>Cerrar sesión</button>
       </Seccion>
     </Hoja>
   );

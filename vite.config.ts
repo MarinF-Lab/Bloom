@@ -18,7 +18,10 @@ const postBuild = () => ({
     if (existsSync(page)) {
       mkdirSync("dist/gestion", { recursive: true });
       // Manifest e íconos quedan en la raíz: desde /gestion/ se piden con "../".
-      const html = readFileSync(page, "utf8").replace(/(href|src)="\.\/(manifest\.webmanifest|icons\/)/g, '$1="../$2');
+      const html = readFileSync(page, "utf8")
+        .replace(/(href|src)="\.\/(manifest\.webmanifest|icons\/)/g, '$1="../$2')
+        // La gestión es privada: que los buscadores no la muestren.
+        .replace("<head>", '<head>\n    <meta name="robots" content="noindex, nofollow" />');
       writeFileSync("dist/gestion/index.html", html);
     }
   },

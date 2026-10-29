@@ -3,8 +3,8 @@ import { enAndroid } from "../store/useCuenta";
 import { Google } from "../ui/icons";
 import { Gatito } from "../ui/Logo";
 
-/** Inicio de la gestión: entrar con Google (datos en la cuenta) o mirar con datos de ejemplo. */
-export function Entrar({ cargando, aviso, onEntrar, onEjemplo }: { cargando: boolean; aviso: string; onEntrar: () => void; onEjemplo: () => void }) {
+/** Inicio de la gestión: solo la dueña de Bloom, con su cuenta de Google. */
+export function Entrar({ cargando, aviso, onEntrar }: { cargando: boolean; aviso: string; onEntrar: () => void }) {
   const android = enAndroid();
   const boton = "flex min-h-12 w-full items-center justify-center gap-2.5 rounded-3xl px-5 text-[15px] font-medium";
   return (
@@ -14,7 +14,7 @@ export function Entrar({ cargando, aviso, onEntrar, onEjemplo }: { cargando: boo
         <div>
           <h1 className="m-0 font-display text-[34px] font-semibold leading-tight">Bloom · Gestión</h1>
           <p className="mx-auto mt-2 mb-0 max-w-[320px] text-[14px] leading-relaxed text-muted">
-            Pedidos, agenda, catálogo y recetas. Con tu cuenta de Google todo queda guardado y la tienda muestra tu catálogo y tu configuración.
+            Acceso solo para la dueña de Bloom. Entra con la cuenta de Google de la tienda.
           </p>
         </div>
         {cargando ? (
@@ -31,9 +31,6 @@ export function Entrar({ cargando, aviso, onEntrar, onEjemplo }: { cargando: boo
                 Entrar con Google
               </button>
             )}
-            <button type="button" onClick={onEjemplo} className={boton + " border-none bg-transparent text-cocoa underline"}>
-              Ver con datos de ejemplo
-            </button>
             {android && <p className="m-0 text-[12px] text-muted">En la app de Android, Google aún no permite entrar: abre la gestión en el navegador.</p>}
           </div>
         )}
