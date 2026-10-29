@@ -1,24 +1,16 @@
 import { useEffect, useState } from "react";
 import { Tienda } from "./tienda/Tienda";
 import { Gestion } from "./gestion/Gestion";
+import { vistaDesdeHash, vistaInicial } from "./core/vista";
 
-type Vista = "tienda" | "gestion";
-
-/** La web abre la tienda; la app de Android abre la gestión. "#gestion" y "#tienda" eligen a mano. */
-function vistaDesdeHash(actual: Vista): Vista {
-  if (location.hash === "#gestion") return "gestion";
-  if (location.hash === "#tienda") return "tienda";
-  return actual;
-}
-
-const inicial: Vista = vistaDesdeHash("Capacitor" in window ? "gestion" : "tienda");
+const inicial = vistaInicial(location.href, "Capacitor" in window);
 
 export function App() {
-  const [vista, setVista] = useState<Vista>(inicial);
+  const [vista, setVista] = useState(inicial);
 
   // Los enlaces internos de la tienda (#catalogo, #pedido…) no cambian de pantalla.
   useEffect(() => {
-    const onHash = () => setVista((v) => vistaDesdeHash(v));
+    const onHash = () => setVista((v) => vistaDesdeHash(location.hash, v));
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
   }, []);

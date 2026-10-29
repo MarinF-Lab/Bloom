@@ -16,7 +16,7 @@ const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 export const ENLACE = "bloom";
 
 /** Dirección publicada, para abrir la gestión en el navegador desde la app de Android. */
-export const WEB_GESTION = "https://marinf-lab.github.io/Bloom/#gestion";
+export const WEB_GESTION = "https://marinf-lab.github.io/Bloom/gestion/";
 
 // Tipos mínimos del SDK compat que se usa.
 interface Doc {
