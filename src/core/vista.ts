@@ -4,13 +4,13 @@ export type Vista = "tienda" | "gestion";
 
 /**
  * La gestión se abre con /gestion/ (dirección propia, no depende del "#"), con #gestion o con ?gestion.
- * "#tienda" fuerza la tienda. Sin nada de eso: gestión dentro de la app de Android, tienda en la web.
+ * "#tienda" fuerza la tienda. Sin nada de eso: la tienda.
  */
-export function vistaInicial(url: string, enApp: boolean): Vista {
+export function vistaInicial(url: string): Vista {
   const u = new URL(url);
   if (u.hash === "#tienda") return "tienda";
   if (u.hash === "#gestion" || u.searchParams.has("gestion") || enPaginaGestion(u.pathname)) return "gestion";
-  return enApp ? "gestion" : "tienda";
+  return "tienda";
 }
 
 /** Al cambiar el "#" ya abierta la página: solo #gestion y #tienda cambian de pantalla. */

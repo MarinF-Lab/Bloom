@@ -1,10 +1,10 @@
 rules_version = '2';
 
 /* Reglas de Bloom Pastelería (mismo esquema que la tienda Shop).
-   La gestión es solo de la dueña: la cuenta vinculada en enlaces/bloom (la primera que entra).
+   La gestión es solo de la dueña: la cuenta de Google bloompasteleriacl@gmail.com (correo verificado).
    Ninguna otra cuenta puede leer ni crear datos. El público (la tienda) solo puede leer la
    Configuración, el catálogo y las fotos, y dejar un pedido en la tienda de la dueña.
-   Para cambiar de dueña: borrar enlaces/bloom en la consola y entrar con la cuenta nueva. */
+   Para cambiar de dueña: cambiar el correo aquí y en src/store/firebase.ts (CORREO_DUENA). */
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -17,9 +17,16 @@ service cloud.firestore {
       return exists(enlaceBloom()) && get(enlaceBloom()).data.uid == uid;
     }
 
-    /* la dueña: sesión iniciada con la cuenta vinculada a la tienda */
+    /* sesión iniciada con el correo de la dueña, verificado por Google */
+    function esCorreoDuena() {
+      return request.auth != null
+        && request.auth.token.email == 'bloompasteleriacl@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    /* la dueña: su cuenta, vinculada a la tienda */
     function esDueno(uid) {
-      return request.auth != null && request.auth.uid == uid && esLaTienda(uid);
+      return esCorreoDuena() && request.auth.uid == uid && esLaTienda(uid);
     }
 
     function texto(d, campo, max) {
@@ -49,17 +56,13 @@ service cloud.firestore {
         && numero(d, 'precio') && numero(d, 'abono');
     }
 
-    /* dirección corta: pública para leer; se crea una sola vez (la primera cuenta que entra queda
-       como dueña) y solo su dueña la cambia o borra */
+    /* dirección corta: pública para leer; solo la dueña la crea o la apunta a su cuenta */
     match /enlaces/{nombre} {
       allow read: if true;
-      allow create: if nombre == 'bloom' && request.auth != null
+      allow create, update: if nombre == 'bloom' && esCorreoDuena()
         && request.resource.data.keys().hasOnly(['uid'])
         && request.resource.data.uid == request.auth.uid;
-      allow update: if request.auth != null && resource.data.uid == request.auth.uid
-        && request.resource.data.keys().hasOnly(['uid'])
-        && request.resource.data.uid == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow delete: if esCorreoDuena();
     }
 
     match /tiendas/{uid} {

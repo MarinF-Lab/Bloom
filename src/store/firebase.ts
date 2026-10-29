@@ -2,9 +2,7 @@
 // falta (como en la tienda Shop). Los valores son públicos; lo que protege los datos son las reglas
 // de Firestore (firestore.rules).
 
-import { registerPlugin } from "@capacitor/core";
 import { FOTO_LIMITE, FOTO_MAX, calidades, idFoto, medidasAchicadas } from "../core/fotos";
-import { enApp } from "../plataforma";
 
 const FIREBASE = {
   apiKey: "AIzaSyAOdtiD0mRI_xRe0CwovqbZ9nux_rEs4eY",
@@ -17,7 +15,7 @@ const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 /** Dirección corta de la tienda (enlaces/bloom → uid de la dueña), como el ?t= de Shop. */
 export const ENLACE = "bloom";
 
-/** Dirección publicada, para abrir la gestión en el navegador desde la app de Android. */
+/** Direcciones publicadas. */
 export const WEB_GESTION = "https://marinf-lab.github.io/Bloom/gestion/";
 export const WEB_TIENDA = "https://marinf-lab.github.io/Bloom/";
 
@@ -120,50 +118,33 @@ export async function escucharSesion(cb: (u: Usuario | null) => void): Promise<(
   return f.auth().onAuthStateChanged(cb);
 }
 
-const enAndroid = () => enApp();
+/** Correo de la dueña de Bloom: la única cuenta que puede abrir la gestión (las reglas de Firestore también lo exigen). */
+export const CORREO_DUENA = "bloompasteleriacl@gmail.com";
 
-/** Plugin nativo @capacitor-firebase/authentication. Se registra sin su parte web
-    (que traería otro SDK de Firebase entero): solo se usa dentro de la app de Android. */
-interface AuthNativa {
-  signInWithGoogle(): Promise<{ credential?: { idToken?: string } | null }>;
-  signOut(): Promise<void>;
-}
-let pluginNativo: AuthNativa | null = null;
-const nativo = async (): Promise<AuthNativa> => (pluginNativo ??= registerPlugin<AuthNativa>("FirebaseAuthentication"));
+export const esLaDuena = (u: Usuario) => (u.email ?? "").trim().toLowerCase() === CORREO_DUENA;
 
 export async function entrar(): Promise<void> {
   const f = await iniciar(true);
-  if (enAndroid()) {
-    // Google no deja usar la ventana web dentro de la app: se entra con la cuenta del teléfono
-    // y con ese token se abre la misma sesión de Firebase que usa la web.
-    const r = await (await nativo()).signInWithGoogle();
-    const idToken = r.credential?.idToken;
-    if (!idToken) throw Object.assign(new Error("Sin token de Google"), { code: "auth/sin-token" });
-    await f.auth().signInWithCredential(f.auth.GoogleAuthProvider.credential(idToken));
-    return;
-  }
-  await f.auth().signInWithPopup(new f.auth.GoogleAuthProvider());
+  const google = new f.auth.GoogleAuthProvider();
+  google.setCustomParameters({ login_hint: CORREO_DUENA, prompt: "select_account" });
+  await f.auth().signInWithPopup(google);
 }
 
 export async function salir(): Promise<void> {
   const f = await iniciar(true);
-  if (enAndroid()) await (await nativo()).signOut().catch(() => {});
   await f.auth().signOut();
 }
 
 /**
- * Deja la dirección corta "bloom" apuntando a esta cuenta, para que la tienda la encuentre.
- * Devuelve false si ya es de otra cuenta.
+ * Deja la dirección corta "bloom" apuntando a la cuenta de la dueña, para que la tienda la encuentre.
+ * Solo funciona con el correo de la dueña (las reglas lo exigen); si apuntaba a otra cuenta, la corrige.
  */
-export async function reclamarEnlace(uid: string): Promise<boolean> {
+export async function reclamarEnlace(uid: string): Promise<void> {
   const db = await firestore(true);
   const ref = db.collection("enlaces").doc(ENLACE);
   const d = await ref.get();
-  const actual = d.exists ? datos(d).uid : undefined;
-  if (actual === uid) return true;
-  if (actual) return false;
+  if (d.exists && datos(d).uid === uid) return;
   await ref.set({ uid });
-  return true;
 }
 
 /** Achica una foto elegida en el teléfono: lado mayor 800 px, en JPG y bajo el límite de Firestore. */
