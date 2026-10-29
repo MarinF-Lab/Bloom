@@ -56,8 +56,3 @@ export function faq(c: Config): { q: string; a: string }[] {
 }
 
 export const ENCARGO_TIPOS = ["Torta personalizada", "Mesa dulce", "Caja de regalo", "Pedido urgente", "Otro"];
-
-/** Fondos de los espacios para fotos de la galería. */
-export const GAL = ["#F7DDE3", "#F6E9C8", "#E6EAD2", "#FBEAEE", "#EFE3D3", "#F7DDE3"];
-
-export const REVIEWS = ["Torta tres leches", "Tiramisú", "Pie de limón"];

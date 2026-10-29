@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { ENCARGO_TIPOS, GAL, PACKS, REVIEWS, faq } from "../data/tienda";
+import { ENCARGO_TIPOS, PACKS, faq } from "../data/tienda";
 import { fechaLarga, linkWhatsApp } from "../core/cart";
-import { soloDigitos, telefonoLegible } from "../core/modelo";
-import { clp } from "../core/money";
+import { soloDigitos } from "../core/modelo";
 import { enviarPedidoTienda } from "../store/useTiendaPublica";
 import { instagramUrl, useTienda, whatsappUrl } from "./contexto";
-import { Gift, Photo } from "../ui/icons";
+import { Gift } from "../ui/icons";
 import { Gatito } from "../ui/Logo";
 import { Eyebrow, H2, area, campo, externo } from "./comun";
 
@@ -120,47 +119,6 @@ export function Encargos() {
   );
 }
 
-export function Galeria() {
-  return (
-    <section id="galeria" className={CAJA + " flex flex-col gap-6 py-[72px]"}>
-      <div>
-        <Eyebrow>GALERÍA</Eyebrow>
-        <H2 className="mt-1.5">Pedidos que ya florecieron</H2>
-      </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
-        {GAL.map((bg, i) => (
-          <div key={i} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[20px] text-[12px] text-muted" style={{ background: bg }}>
-            <Photo size={28} />
-            [Foto de pedido]
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function Opiniones() {
-  return (
-    <section id="opiniones" className="bg-olive-soft">
-      <div className={CAJA + " flex flex-col gap-6 py-16"}>
-        <div>
-          <Eyebrow className="text-olive-ink">OPINIONES</Eyebrow>
-          <H2 className="mt-1.5">Lo que dicen nuestros clientes</H2>
-        </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[18px]">
-          {REVIEWS.map((product) => (
-            <figure key={product} className="m-0 flex flex-col gap-3 rounded-[22px] bg-paper p-[22px]">
-              <div aria-hidden="true" className="font-display text-[48px] leading-[0.6] text-rose-deep">“</div>
-              <blockquote className="m-0 text-[15px] leading-[1.6] text-muted">[Opinión real de un cliente]</blockquote>
-              <figcaption className="text-[13px] font-semibold">[Nombre del cliente] · {product}</figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function Sobre() {
   return (
     <section id="sobre" className={CAJA + " flex flex-wrap items-center gap-9 py-[72px]"}>
@@ -191,53 +149,6 @@ export function Preguntas() {
             <div key={f.q} className="flex flex-col gap-1.5 rounded-[20px] bg-cream px-5 py-[18px]">
               <h3 className="m-0 text-[15px] font-semibold">{f.q}</h3>
               <p className="m-0 text-[14px] leading-[1.6] text-muted">{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function Contacto() {
-  const { config } = useTienda();
-  const fila = "flex gap-2.5";
-  const etiqueta = "w-[110px] flex-none text-muted";
-  const despachos = config.zonas.filter((z) => z.fee > 0);
-  return (
-    <section id="contacto" className={CAJA + " flex flex-wrap items-stretch gap-6 py-[72px]"}>
-      <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4 rounded-[28px] border border-line bg-paper p-[26px]">
-        <Eyebrow>HORARIOS Y UBICACIÓN</Eyebrow>
-        <h2 className="m-0 font-display text-[38px] font-semibold leading-[1.05]">Te esperamos</h2>
-        <div className="flex flex-col gap-2.5 text-[15px]">
-          <div className={fila}><span className={etiqueta}>Horario</span><span>{config.horario}</span></div>
-          <div className={fila}><span className={etiqueta}>Ubicación</span><span>{config.ubicacion}</span></div>
-          <div className={fila}><span className={etiqueta}>WhatsApp</span><span>{telefonoLegible(config.whatsapp)}</span></div>
-        </div>
-        {despachos.length > 0 && (
-          <div className="flex flex-col gap-2 border-t border-line pt-3.5">
-            <div className="text-[14px] font-semibold">Despacho a domicilio</div>
-            {despachos.map((z) => (
-              <div key={z.key} className="flex justify-between text-[14px]"><span>{z.label.replace(/^Despacho (en|a) /, "")}</span><span className="font-semibold">{clp(z.fee)}</span></div>
-            ))}
-            {config.envioGratisDesde > 0 && <div className="rounded-[10px] bg-olive-soft px-2.5 py-2 text-[13px] text-olive-ink">Gratis en pedidos sobre {clp(config.envioGratisDesde)}</div>}
-          </div>
-        )}
-      </div>
-      <div className="flex min-w-0 flex-[1.3_1_320px] flex-col gap-4 rounded-[28px] bg-rose-soft p-[26px]">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <Eyebrow className="text-rose-ink">INSTAGRAM</Eyebrow>
-            <div className="font-display text-[28px] font-semibold break-words sm:text-[32px]">@{config.instagram}</div>
-          </div>
-          <a href={instagramUrl(config.instagram)} {...externo} className="flex min-h-11 items-center rounded-[22px] bg-rose-deep px-5 text-[14px] font-medium text-paper">
-            Seguir
-          </a>
-        </div>
-        <div className="grid grid-cols-3 gap-2.5">
-          {GAL.map((c, i) => (
-            <div key={i} className="flex aspect-square items-center justify-center rounded-[14px] p-1.5 text-center text-[11px] text-rose-ink" style={{ background: c === "#F7DDE3" ? "#FFFDF8" : c }}>
-              [Publicación]
             </div>
           ))}
         </div>

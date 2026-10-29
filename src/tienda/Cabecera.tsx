@@ -35,7 +35,6 @@ const NAV = [
   ["#packs", "Packs"],
   ["#encargos", "Encargos"],
   ["#preguntas", "Preguntas"],
-  ["#contacto", "Contacto"],
 ] as const;
 
 export function Cabecera({ cartCount }: { cartCount: number }) {
