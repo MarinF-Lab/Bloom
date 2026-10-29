@@ -16,7 +16,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    document.title = vista === "gestion" ? "Bloom · App de gestión" : "Bloom Pastelería";
+    if (vista === "gestion") document.title = "Bloom · App de gestión";
   }, [vista]);
 
   return vista === "gestion" ? <Gestion /> : <Tienda />;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RECIPES } from "../data/gestion";
+import type { Receta } from "../core/modelo";
 import { TINTS } from "../data/productos";
 import { costoPorPorcion, costoReceta, margen } from "../core/recipes";
 import { clp } from "../core/money";
@@ -7,12 +7,12 @@ import { Book, ChevronDown } from "../ui/icons";
 
 const ROTULO = "text-[11px] font-semibold tracking-[0.12em] text-olive uppercase";
 
-export function Recetas() {
-  const [abierta, setAbierta] = useState<string | null>("r1");
+export function Recetas({ recetas, onEditar, onNueva }: { recetas: Receta[]; onEditar: (r: Receta) => void; onNueva: () => void }) {
+  const [abierta, setAbierta] = useState<string | null>(null);
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-xl bg-rose-soft px-3 py-2 text-[12px] text-rose-ink">Costos de ejemplo: reemplázalos por los tuyos.</div>
-      {RECIPES.map((r) => {
+      <div className="rounded-xl bg-rose-soft px-3 py-2 text-[12px] text-rose-ink">Revisa que los costos sean los tuyos: el margen se calcula con ellos.</div>
+      {recetas.map((r) => {
         const costo = costoReceta(r.ingredients);
         const open = abierta === r.id;
         return (
@@ -40,8 +40,8 @@ export function Recetas() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className={ROTULO}>Ingredientes</div>
-                  {r.ingredients.map(([name, qty, c]) => (
-                    <div key={name} className="flex gap-2 border-b border-dashed border-line py-[5px] text-[13px]">
+                  {r.ingredients.map(({ name, qty, cost: c }, k) => (
+                    <div key={k} className="flex gap-2 border-b border-dashed border-line py-[5px] text-[13px]">
                       <span className="min-w-0 flex-1">{name}</span>
                       <span className="text-muted">{qty}</span>
                       <span className="w-[58px] text-right font-medium">{clp(c)}</span>
@@ -57,12 +57,13 @@ export function Recetas() {
                     </div>
                   ))}
                 </div>
+                <button type="button" onClick={() => onEditar(r)} className="min-h-10 self-start rounded-[20px] border border-line-2 bg-transparent px-4 text-[13px] font-semibold text-cocoa">Editar receta</button>
               </div>
             )}
           </article>
         );
       })}
-      <button type="button" className="min-h-12 rounded-[18px] border-[1.5px] border-dashed border-[#C9B79F] bg-transparent text-[14px] font-medium text-cocoa">+ Nueva receta</button>
+      <button type="button" onClick={onNueva} className="min-h-12 rounded-[18px] border-[1.5px] border-dashed border-[#C9B79F] bg-transparent text-[14px] font-medium text-cocoa">+ Nueva receta</button>
     </div>
   );
 }

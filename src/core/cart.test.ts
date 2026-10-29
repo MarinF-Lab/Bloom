@@ -33,6 +33,15 @@ describe("totales", () => {
     expect(despacho(RETIRO, 40000)).toBe(0);
     expect(despacho(LOCAL, 100)).toBe(0);
   });
+  it("usa el monto de despacho gratis y el abono de la configuración", () => {
+    const r = resumen(P, { p1: 1 }, RETIRO, { gratisDesde: 30000, abonoPct: 30 });
+    expect(r.despacho).toBe(0);
+    expect(r.abono).toBe(9150);
+    const nunca = resumen(P, { p1: 2 }, RETIRO, { gratisDesde: 0, abonoPct: 50 });
+    expect(nunca.despacho).toBe(1000);
+    expect(nunca.gratis).toBe(false);
+    expect(nunca.faltaParaGratis).toBe(0);
+  });
   it("arma el resumen con abono del 50 %", () => {
     const r = resumen(P, { p1: 1, p7: 1 }, RETIRO);
     expect(r).toEqual({ subtotal: 35000, despacho: 1000, total: 36000, abono: 18000, gratis: false, faltaParaGratis: 5000 });
@@ -50,7 +59,8 @@ describe("mensaje de WhatsApp", () => {
     );
   });
   it("agrega fecha, código y dedicatoria si los hay", () => {
-    const m = mensajePedido(P, { p4: 1 }, LOCAL, { fecha: "2026-10-31", codigo: " bloom10 ", dedicatoria: "Para Ana" });
+    const m = mensajePedido(P, { p4: 1 }, LOCAL, { nombre: "Ana", fecha: "2026-10-31", codigo: " bloom10 ", dedicatoria: "Para Ana" });
+    expect(m).toContain("Nombre: Ana.");
     expect(m).toContain("Fecha: 31/10/2026.");
     expect(m).toContain("Código de descuento: BLOOM10.");
     expect(m).toContain("Dedicatoria: Para Ana.");
@@ -64,6 +74,10 @@ describe("fechas", () => {
   it("la fecha mínima es mañana, también a fin de mes", () => {
     expect(fechaMinima(new Date(2026, 9, 29))).toBe("2026-10-30");
     expect(fechaMinima(new Date(2026, 11, 31))).toBe("2027-01-01");
+  });
+  it("respeta las horas de anticipación de la configuración", () => {
+    expect(fechaMinima(new Date(2026, 9, 29, 15), 48)).toBe("2026-10-31");
+    expect(fechaMinima(new Date(2026, 9, 29, 15), 0)).toBe("2026-10-29");
   });
   it("muestra la fecha en formato chileno", () => {
     expect(fechaLarga("2026-11-02")).toBe("02/11/2026");

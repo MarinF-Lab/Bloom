@@ -1,10 +1,13 @@
 // Costos de recetas: total, por porción y margen sobre el precio de venta.
 
-/** [nombre, cantidad, costo] */
-export type Ingrediente = readonly [string, string, number];
+export interface Ingrediente {
+  name: string;
+  qty: string;
+  cost: number;
+}
 
 export function costoReceta(ingredientes: readonly Ingrediente[]): number {
-  return ingredientes.reduce((a, i) => a + i[2], 0);
+  return ingredientes.reduce((a, i) => a + (Number.isFinite(i.cost) ? i.cost : 0), 0);
 }
 
 export function costoPorPorcion(costo: number, porciones: number): number {

@@ -1,6 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { ENCARGO_TIPOS, FAQ, GAL, INSTAGRAM, PACKS, REVIEWS, WHATSAPP } from "../data/tienda";
+import { ENCARGO_TIPOS, GAL, PACKS, REVIEWS, faq } from "../data/tienda";
 import { fechaLarga, linkWhatsApp } from "../core/cart";
+import { soloDigitos, telefonoLegible } from "../core/modelo";
+import { clp } from "../core/money";
+import { enviarPedidoTienda } from "../store/useTiendaPublica";
+import { instagramUrl, useTienda, whatsappUrl } from "./contexto";
 import { Gift, Photo } from "../ui/icons";
 import { Gatito } from "../ui/Logo";
 import { Eyebrow, H2, area, campo, externo } from "./comun";
@@ -8,6 +12,7 @@ import { Eyebrow, H2, area, campo, externo } from "./comun";
 const CAJA = "mx-auto max-w-[1180px] px-6";
 
 export function Packs() {
+  const { config } = useTienda();
   return (
     <section id="packs" className="bg-honey">
       <div className={CAJA + " flex flex-col gap-[26px] py-16"}>
@@ -24,7 +29,7 @@ export function Packs() {
               <h3 className="m-0 font-display text-[26px] font-semibold leading-[1.1]">{k.name}</h3>
               <p className="m-0 flex-1 text-[14px] leading-[1.55] text-muted">{k.desc}</p>
               <a
-                href={linkWhatsApp(WHATSAPP, "Hola Bloom, quiero cotizar: " + k.name)}
+                href={linkWhatsApp(config.whatsapp, "Hola Bloom, quiero cotizar: " + k.name)}
                 {...externo}
                 className="flex min-h-11 items-center self-start rounded-[22px] bg-cocoa px-5 text-[14px] font-medium text-cream"
               >
@@ -39,6 +44,7 @@ export function Packs() {
 }
 
 export function Encargos() {
+  const { config } = useTienda();
   const [enviado, setEnviado] = useState(false);
 
   // El encargo se manda por WhatsApp con lo que escribió la persona.
@@ -53,8 +59,22 @@ export function Encargos() {
       v("fecha") && `Fecha: ${fechaLarga(v("fecha"))}.`,
       v("detalle") && `Idea: ${v("detalle")}`,
     ].filter(Boolean);
-    window.open(linkWhatsApp(WHATSAPP, lineas.join(" ")), "_blank", "noopener");
+    window.open(linkWhatsApp(config.whatsapp, lineas.join(" ")), "_blank", "noopener");
     setEnviado(true);
+    // También queda en la gestión, si dejó nombre y teléfono.
+    if (v("nombre") && soloDigitos(v("telefono")).length >= 8) {
+      void enviarPedidoTienda({
+        cliente: v("nombre").slice(0, 120),
+        whatsapp: soloDigitos(v("telefono")).slice(0, 40),
+        items: [{ nombre: `Encargo: ${v("tipo")}`, cant: 1, precio: 0 }],
+        producto: `Encargo: ${v("tipo")}`.slice(0, 300),
+        precio: 0,
+        abono: 0,
+        fecha: v("fecha"),
+        entrega: "",
+        notas: v("detalle").slice(0, 300),
+      });
+    }
   }
 
   return (
@@ -158,6 +178,7 @@ export function Sobre() {
 }
 
 export function Preguntas() {
+  const { config } = useTienda();
   return (
     <section id="preguntas" className="border-y border-line bg-paper">
       <div className={CAJA + " flex flex-col gap-6 py-16"}>
@@ -166,7 +187,7 @@ export function Preguntas() {
           <H2 className="mt-1.5">Antes de pedir</H2>
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-4">
-          {FAQ.map((f) => (
+          {faq(config).map((f) => (
             <div key={f.q} className="flex flex-col gap-1.5 rounded-[20px] bg-cream px-5 py-[18px]">
               <h3 className="m-0 text-[15px] font-semibold">{f.q}</h3>
               <p className="m-0 text-[14px] leading-[1.6] text-muted">{f.a}</p>
@@ -179,33 +200,37 @@ export function Preguntas() {
 }
 
 export function Contacto() {
+  const { config } = useTienda();
   const fila = "flex gap-2.5";
   const etiqueta = "w-[110px] flex-none text-muted";
+  const despachos = config.zonas.filter((z) => z.fee > 0);
   return (
     <section id="contacto" className={CAJA + " flex flex-wrap items-stretch gap-6 py-[72px]"}>
       <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4 rounded-[28px] border border-line bg-paper p-[26px]">
         <Eyebrow>HORARIOS Y UBICACIÓN</Eyebrow>
         <h2 className="m-0 font-display text-[38px] font-semibold leading-[1.05]">Te esperamos</h2>
         <div className="flex flex-col gap-2.5 text-[15px]">
-          <div className={fila}><span className={etiqueta}>Horario</span><span>Lunes a sábado, 7:30 a 20:00</span></div>
-          <div className={fila}><span className={etiqueta}>Ubicación</span><span>Retiro, Región del Maule</span></div>
-          <div className={fila}><span className={etiqueta}>WhatsApp</span><span>+56 9 5797 3831</span></div>
+          <div className={fila}><span className={etiqueta}>Horario</span><span>{config.horario}</span></div>
+          <div className={fila}><span className={etiqueta}>Ubicación</span><span>{config.ubicacion}</span></div>
+          <div className={fila}><span className={etiqueta}>WhatsApp</span><span>{telefonoLegible(config.whatsapp)}</span></div>
         </div>
-        <div className="flex flex-col gap-2 border-t border-line pt-3.5">
-          <div className="text-[14px] font-semibold">Despacho a domicilio</div>
-          <div className="flex justify-between text-[14px]"><span>Retiro</span><span className="font-semibold">$1.000</span></div>
-          <div className="flex justify-between text-[14px]"><span>Copihue</span><span className="font-semibold">$1.500</span></div>
-          <div className="flex justify-between text-[14px]"><span>Parral</span><span className="font-semibold">$2.000</span></div>
-          <div className="rounded-[10px] bg-olive-soft px-2.5 py-2 text-[13px] text-olive-ink">Gratis en pedidos sobre $40.000</div>
-        </div>
+        {despachos.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-line pt-3.5">
+            <div className="text-[14px] font-semibold">Despacho a domicilio</div>
+            {despachos.map((z) => (
+              <div key={z.key} className="flex justify-between text-[14px]"><span>{z.label.replace(/^Despacho (en|a) /, "")}</span><span className="font-semibold">{clp(z.fee)}</span></div>
+            ))}
+            {config.envioGratisDesde > 0 && <div className="rounded-[10px] bg-olive-soft px-2.5 py-2 text-[13px] text-olive-ink">Gratis en pedidos sobre {clp(config.envioGratisDesde)}</div>}
+          </div>
+        )}
       </div>
       <div className="flex min-w-0 flex-[1.3_1_320px] flex-col gap-4 rounded-[28px] bg-rose-soft p-[26px]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <Eyebrow className="text-rose-ink">INSTAGRAM</Eyebrow>
-            <div className="font-display text-[28px] font-semibold break-words sm:text-[32px]">@_bloompasteleria.cl</div>
+            <div className="font-display text-[28px] font-semibold break-words sm:text-[32px]">@{config.instagram}</div>
           </div>
-          <a href={INSTAGRAM} {...externo} className="flex min-h-11 items-center rounded-[22px] bg-rose-deep px-5 text-[14px] font-medium text-paper">
+          <a href={instagramUrl(config.instagram)} {...externo} className="flex min-h-11 items-center rounded-[22px] bg-rose-deep px-5 text-[14px] font-medium text-paper">
             Seguir
           </a>
         </div>
@@ -222,6 +247,7 @@ export function Contacto() {
 }
 
 export function Pie() {
+  const { config } = useTienda();
   return (
     <footer className="bg-cocoa text-cream">
       <div className={CAJA + " flex flex-wrap items-center justify-between gap-5 py-9"}>
@@ -233,11 +259,11 @@ export function Pie() {
           </div>
         </div>
         <nav aria-label="Redes" className="flex flex-wrap gap-x-[18px] gap-y-2 text-[14px]">
-          <a href={`https://wa.me/${WHATSAPP}`} {...externo} className="py-2.5 text-cream underline">WhatsApp</a>
-          <a href={INSTAGRAM} {...externo} className="py-2.5 text-cream underline">Instagram</a>
+          <a href={whatsappUrl(config.whatsapp)} {...externo} className="py-2.5 text-cream underline">WhatsApp</a>
+          <a href={instagramUrl(config.instagram)} {...externo} className="py-2.5 text-cream underline">Instagram</a>
           <a href="#encargos" className="py-2.5 text-cream underline">Encargos</a>
         </nav>
-        <div className="text-[12px] text-foam">© 2026 Bloom Pastelería · Retiro</div>
+        <div className="text-[12px] text-foam">© {new Date().getFullYear()} {config.nombre}</div>
       </div>
     </footer>
   );

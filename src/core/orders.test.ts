@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { etiquetaDia, filtrar, siguienteEstado, textoCupos } from "./orders";
 
 const O = [
-  { id: 1, status: "entregado", urgent: false },
-  { id: 2, status: "horno", urgent: false },
-  { id: 3, status: "pendiente", urgent: true },
-  { id: 4, status: "pendiente", urgent: false },
+  { id: 1, estado: "entregado", urgente: false },
+  { id: 2, estado: "horno", urgente: false },
+  { id: 3, estado: "pendiente", urgente: true },
+  { id: 4, estado: "pendiente", urgente: false },
 ] as const;
 
 describe("pedidos", () => {

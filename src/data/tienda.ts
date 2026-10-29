@@ -1,15 +1,9 @@
-// Contenido de la tienda pública.
+// Contenido fijo de la tienda pública.
 
-import type { Zona } from "../core/cart";
+// Contacto, despacho, temporada y catálogo vienen de la Configuración (src/core/modelo.ts y la cuenta).
 
-/** WhatsApp de Bloom, sin "+" ni espacios. */
-export const WHATSAPP = "56957973831";
-export const INSTAGRAM = "https://instagram.com/_bloompasteleria.cl";
-
-export type Temporada = "Navidad" | "Año Nuevo" | "San Valentín" | "Fiestas Patrias" | "Primavera" | "Ninguna";
-
-/** Aviso de temporada arriba de la tienda. Cámbialo aquí ("Ninguna" lo oculta). */
-export const TEMPORADA: Temporada = "Navidad";
+import type { Config, Temporada } from "../core/modelo";
+import { clp } from "../core/money";
 
 export const SEASONS: Record<Exclude<Temporada, "Ninguna">, { bg: string; fg: string; title: string; text: string }> = {
   Navidad: { bg: "#5A6635", fg: "#FFFDF8", title: "Navidad en Bloom", text: "Reserva tus tortas, cajas dulces y mesas de postres para diciembre." },
@@ -41,21 +35,25 @@ export const TORTA_INICIAL: Record<ParteTorta, string> = {
   cover: "Crema tipo chantilly",
 };
 
-export const ZONES: Zona[] = [
-  { key: "local", label: "Retiro en domicilio de Bloom", fee: 0 },
-  { key: "retiro", label: "Despacho en Retiro", fee: 1000 },
-  { key: "copihue", label: "Despacho en Copihue", fee: 1500 },
-  { key: "parral", label: "Despacho en Parral", fee: 2000 },
-];
 
-export const FAQ = [
-  { q: "¿Con cuánta anticipación debo pedir?", a: "Con al menos 24 horas. Si necesitas algo urgente, escríbenos: si tenemos los insumos, te hacemos un espacio." },
-  { q: "¿Cómo reservo mi pedido?", a: "Con un abono del 50% del total. El resto se paga al recibir o retirar." },
-  { q: "¿Qué formas de pago aceptan?", a: "Transferencia y efectivo." },
-  { q: "¿Hacen despacho?", a: "Sí: Retiro $1.000, Copihue $1.500 y Parral $2.000. Gratis en pedidos sobre $40.000." },
-  { q: "¿Tienen opciones sin gluten?", a: "Sí, nuestra torta tres leches también se prepara sin gluten." },
-  { q: "¿Puedo pedir una torta personalizada?", a: "Sí. Usa Arma tu torta o el formulario de encargos y la diseñamos contigo." },
-];
+/** Preguntas frecuentes, con los datos de la Configuración. */
+export function faq(c: Config): { q: string; a: string }[] {
+  const desp = c.zonas.filter((z) => z.fee > 0).map((z) => `${z.label.replace(/^Despacho (en|a) /, "")} ${clp(z.fee)}`);
+  const anticipo = c.horasMinimas >= 48 ? `${Math.round(c.horasMinimas / 24)} días` : `${c.horasMinimas} horas`;
+  return [
+    { q: "¿Con cuánta anticipación debo pedir?", a: `Con al menos ${anticipo}. Si necesitas algo urgente, escríbenos: si tenemos los insumos, te hacemos un espacio.` },
+    { q: "¿Cómo reservo mi pedido?", a: `Con un abono del ${c.abonoPct}% del total. El resto se paga al recibir o retirar.` },
+    { q: "¿Qué formas de pago aceptan?", a: "Transferencia y efectivo." },
+    {
+      q: "¿Hacen despacho?",
+      a: desp.length
+        ? `Sí: ${desp.join(", ")}.${c.envioGratisDesde > 0 ? ` Gratis en pedidos sobre ${clp(c.envioGratisDesde)}.` : ""}`
+        : "Por ahora solo retiro.",
+    },
+    { q: "¿Tienen opciones sin gluten?", a: "Sí, nuestra torta tres leches también se prepara sin gluten." },
+    { q: "¿Puedo pedir una torta personalizada?", a: "Sí. Usa Arma tu torta o el formulario de encargos y la diseñamos contigo." },
+  ];
+}
 
 export const ENCARGO_TIPOS = ["Torta personalizada", "Mesa dulce", "Caja de regalo", "Pedido urgente", "Otro"];
 

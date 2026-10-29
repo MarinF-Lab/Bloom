@@ -17,39 +17,20 @@ export const ENLACE = "bloom";
 
 /** Dirección publicada, para abrir la gestión en el navegador desde la app de Android. */
 export const WEB_GESTION = "https://marinf-lab.github.io/Bloom/gestion/";
+export const WEB_TIENDA = "https://marinf-lab.github.io/Bloom/";
 
-// Tipos mínimos del SDK compat que se usa.
-interface Doc {
-  exists: boolean;
-  data(): Record<string, unknown> | undefined;
-}
-interface DocRef {
-  get(): Promise<Doc>;
-  set(d: Record<string, unknown>): Promise<void>;
-  delete(): Promise<void>;
-  collection(n: string): { doc(id: string): DocRef };
-}
-interface Firestore {
-  collection(n: string): { doc(id: string): DocRef };
-}
+export type Crudo = Record<string, unknown>;
+
 export interface Usuario {
   uid: string;
   displayName: string | null;
   email: string | null;
 }
-interface Auth {
-  currentUser: Usuario | null;
-  onAuthStateChanged(cb: (u: Usuario | null) => void): () => void;
-  signInWithPopup(p: unknown): Promise<unknown>;
-  signOut(): Promise<void>;
-}
-interface FirebaseCompat {
-  apps: unknown[];
-  initializeApp(c: object): void;
-  firestore(): Firestore;
-  auth: (() => Auth) & { GoogleAuthProvider: new () => unknown };
-}
-const fb = () => (window as unknown as { firebase: FirebaseCompat }).firebase;
+
+/* El SDK compat no trae tipos al cargarse desde gstatic: se usa sin tipos, solo dentro de este archivo
+   y de almacen.ts. */
+export type FS = any;
+const fb = (): any => (window as unknown as { firebase: unknown }).firebase;
 
 const cargados: Record<string, Promise<void>> = {};
 function cargar(archivo: string): Promise<void> {
@@ -65,42 +46,72 @@ function cargar(archivo: string): Promise<void> {
   }));
 }
 
-async function iniciar(conAuth: boolean): Promise<FirebaseCompat> {
+let conCache = false;
+
+async function iniciar(conAuth: boolean): Promise<FS> {
   await cargar("firebase-app-compat.js");
   await cargar("firebase-firestore-compat.js");
   if (conAuth) await cargar("firebase-auth-compat.js");
   const f = fb();
-  if (!f.apps.length) f.initializeApp(FIREBASE);
+  if (!f.apps.length) {
+    f.initializeApp(FIREBASE);
+    // La gestión guarda una copia para trabajar sin señal (como Shop). Debe pedirse antes de cualquier lectura.
+    if (conAuth && !conCache) {
+      conCache = true;
+      f.firestore().enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    }
+  }
   return f;
 }
 
-const tienda = (db: Firestore, uid: string) => db.collection("tiendas").doc(uid);
+export async function firestore(conAuth: boolean): Promise<FS> {
+  return (await iniciar(conAuth)).firestore();
+}
 
-// ---------- tienda pública: solo lectura ----------
+export const tiendaRef = (db: FS, uid: string): FS => db.collection("tiendas").doc(uid);
 
-/** Fotos publicadas de estos productos (id → data URL). Si algo falla, devuelve lo que alcanzó. */
-export async function leerFotosPublicas(ids: readonly string[]): Promise<Record<string, string>> {
-  const f = await iniciar(false);
-  const db = f.firestore();
+const datos = (d: FS): Crudo => (d.data() ?? {}) as Crudo;
+
+// ---------- tienda pública: solo lectura, más crear pedidos ----------
+
+export interface TiendaPublica {
+  uid: string;
+  config: Crudo | null;
+  catalogo: { id: string; datos: Crudo }[];
+  fotos: Record<string, string>;
+}
+
+/** Lo que la dueña publicó. null si la tienda aún no está vinculada a una cuenta. */
+export async function leerTiendaPublica(): Promise<TiendaPublica | null> {
+  const db = await firestore(false);
   const enlace = await db.collection("enlaces").doc(ENLACE).get();
-  const uid = enlace.exists ? enlace.data()?.uid : undefined;
-  if (typeof uid !== "string") return {};
-  const out: Record<string, string> = {};
-  await Promise.all(
-    ids.map(async (id) => {
-      try {
-        const d = await tienda(db, uid).collection("fotos").doc(idFoto(id)).get();
-        const img = d.exists ? d.data()?.img : undefined;
-        if (typeof img === "string") out[id] = img;
-      } catch {
-        /* sin foto: queda el dibujo */
-      }
-    }),
-  );
+  const uid = enlace.exists ? datos(enlace).uid : undefined;
+  if (typeof uid !== "string") return null;
+  const ref = tiendaRef(db, uid);
+  const [conf, cat, fotos] = await Promise.all([
+    ref.collection("publico").doc("tienda").get().catch(() => null),
+    ref.collection("catalogo").get().catch(() => null),
+    ref.collection("fotos").get().catch(() => null),
+  ]);
+  const out: TiendaPublica = { uid, config: conf?.exists ? datos(conf) : null, catalogo: [], fotos: {} };
+  cat?.forEach((d: FS) => out.catalogo.push({ id: d.id, datos: datos(d) }));
+  fotos?.forEach((d: FS) => {
+    const img = datos(d).img;
+    if (typeof img === "string") out.fotos[sinPrefijo(d.id)] = img;
+  });
   return out;
 }
 
-// ---------- app de gestión: con sesión de Google ----------
+/** Deja un pedido en la gestión de la dueña. Las reglas solo aceptan los campos de la tienda. */
+export async function crearPedidoPublico(uid: string, pedido: Crudo): Promise<void> {
+  const db = await firestore(false);
+  await tiendaRef(db, uid).collection("pedidos").add(pedido);
+}
+
+export const sinPrefijo = (docId: string) => docId.replace(/^bloom-/, "");
+export { idFoto };
+
+// ---------- sesión de Google ----------
 
 export async function escucharSesion(cb: (u: Usuario | null) => void): Promise<() => void> {
   const f = await iniciar(true);
@@ -118,41 +129,18 @@ export async function salir(): Promise<void> {
 }
 
 /**
- * Deja la dirección corta "bloom" apuntando a esta cuenta, para que la tienda encuentre las fotos.
+ * Deja la dirección corta "bloom" apuntando a esta cuenta, para que la tienda la encuentre.
  * Devuelve false si ya es de otra cuenta.
  */
 export async function reclamarEnlace(uid: string): Promise<boolean> {
-  const db = (await iniciar(true)).firestore();
+  const db = await firestore(true);
   const ref = db.collection("enlaces").doc(ENLACE);
   const d = await ref.get();
-  const actual = d.exists ? d.data()?.uid : undefined;
+  const actual = d.exists ? datos(d).uid : undefined;
   if (actual === uid) return true;
   if (actual) return false;
   await ref.set({ uid });
   return true;
-}
-
-export async function leerFotos(uid: string, ids: readonly string[]): Promise<Record<string, string>> {
-  const db = (await iniciar(true)).firestore();
-  const out: Record<string, string> = {};
-  await Promise.all(
-    ids.map(async (id) => {
-      const d = await tienda(db, uid).collection("fotos").doc(idFoto(id)).get();
-      const img = d.exists ? d.data()?.img : undefined;
-      if (typeof img === "string") out[id] = img;
-    }),
-  );
-  return out;
-}
-
-export async function guardarFoto(uid: string, id: string, img: string): Promise<void> {
-  const db = (await iniciar(true)).firestore();
-  await tienda(db, uid).collection("fotos").doc(idFoto(id)).set({ img, actualizado: new Date().toISOString() });
-}
-
-export async function quitarFoto(uid: string, id: string): Promise<void> {
-  const db = (await iniciar(true)).firestore();
-  await tienda(db, uid).collection("fotos").doc(idFoto(id)).delete();
 }
 
 /** Achica una foto elegida en el teléfono: lado mayor 800 px, en JPG y bajo el límite de Firestore. */

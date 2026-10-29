@@ -1,12 +1,18 @@
 import { useState, type ReactNode } from "react";
-import { HOY } from "../data/gestion";
-import { PRODUCTS } from "../data/productos";
-import type { Estado } from "../core/orders";
-import { useFotos } from "../store/useFotos";
-import { Book, Cake, Calendar, Clipboard, Dots, Plus } from "../ui/icons";
+import { ymd, fechaTitulo } from "../core/fechas";
+import type { Pedido, Producto, Receta } from "../core/modelo";
+import { categorias } from "../data/productos";
+import { useCuenta, type Sesion } from "../store/useCuenta";
+import { useDatos } from "../store/useDatos";
+import { Book, Cake, Calendar, Clipboard, Dots, Gear, Plus } from "../ui/icons";
 import { Logo } from "../ui/Logo";
 import { Agenda } from "./Agenda";
 import { Catalogo } from "./Catalogo";
+import { Configuracion } from "./Configuracion";
+import { EditorPedido, pedidoNuevo } from "./EditorPedido";
+import { EditorProducto, productoNuevo } from "./EditorProducto";
+import { EditorReceta, recetaNueva } from "./EditorReceta";
+import { Entrar } from "./Entrar";
 import { Mas, SEG_TITULOS, type Seg } from "./Mas";
 import { Pedidos } from "./Pedidos";
 import { Recetas } from "./Recetas";
@@ -21,17 +27,36 @@ const TABS: { key: Tab; label: string; icon: ReactNode }[] = [
   { key: "mas", label: "Más", icon: <Dots /> },
 ];
 
-const IDS = PRODUCTS.map((p) => p.id);
-
-/** App de gestión de la pastelería: pedidos, agenda, catálogo, recetas, clientes e insumos. */
+/** App de gestión: solo la dueña de Bloom, con su cuenta de Google. */
 export function Gestion() {
+  const c = useCuenta();
+  if (c.sesion.modo === "cuenta" || c.sesion.modo === "prueba") {
+    return <Panel sesion={c.sesion} avisoCuenta={c.aviso} onSalir={c.cerrarSesion} />;
+  }
+  return <Entrar cargando={c.sesion.modo === "cargando"} aviso={c.aviso} onEntrar={c.iniciarSesion} />;
+}
+
+type Hojita =
+  | { tipo: "config" }
+  | { tipo: "pedido"; p: Pedido; nuevo: boolean }
+  | { tipo: "producto"; p: Producto; nuevo: boolean }
+  | { tipo: "receta"; r: Receta; nueva: boolean }
+  | null;
+
+function Panel({ sesion, avisoCuenta, onSalir }: {
+  sesion: Extract<Sesion, { modo: "cuenta" | "prueba" }>;
+  avisoCuenta: string;
+  onSalir: () => void;
+}) {
+  const d = useDatos(sesion.almacen);
   const [tab, setTab] = useState<Tab>("pedidos");
   const [seg, setSeg] = useState<Seg>("clientes");
-  const [statuses, setStatuses] = useState<Record<number, Estado>>({});
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const fotos = useFotos(IDS);
-
+  const [hoja, setHoja] = useState<Hojita>(null);
+  const hoy = ymd(new Date());
+  const cerrar = () => setHoja(null);
   const titulo = tab === "mas" ? SEG_TITULOS[seg] : TABS.find((t) => t.key === tab)!.label;
+  const editarPedido = (p: Pedido) => setHoja({ tipo: "pedido", p, nuevo: false });
+  const aviso = d.aviso || avisoCuenta;
 
   return (
     <div className="bg-cream">
@@ -40,35 +65,40 @@ export function Gestion() {
           <Logo alt="Logo de Bloom Pastelería" className="size-12 rounded-full border border-line" />
           <div className="min-w-0 flex-1">
             <h1 className="m-0 font-display text-[26px] font-semibold leading-[1.1]">{titulo}</h1>
-            <div className="mt-0.5 text-[12px] text-muted">{HOY}</div>
+            <div className="mt-0.5 text-[12px] text-muted">{fechaTitulo(hoy)}</div>
           </div>
-          <button type="button" aria-label="Nuevo pedido" className="flex size-11 items-center justify-center rounded-full border-none bg-cocoa p-0 text-cream">
+          <button type="button" aria-label="Configuración" onClick={() => setHoja({ tipo: "config" })} className="flex size-11 items-center justify-center rounded-full border border-line bg-paper p-0 text-cocoa">
+            <Gear size={20} />
+          </button>
+          <button type="button" aria-label="Nuevo pedido" onClick={() => setHoja({ tipo: "pedido", p: pedidoNuevo(hoy), nuevo: true })} className="flex size-11 items-center justify-center rounded-full border-none bg-cocoa p-0 text-cream">
             <Plus size={20} />
           </button>
         </header>
 
         <main className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-[18px] pt-3.5 pb-[22px]">
-          {tab === "pedidos" && <Pedidos statuses={statuses} onStatus={(id, s) => setStatuses((c) => ({ ...c, [id]: s }))} />}
-          {tab === "agenda" && <Agenda />}
-          {tab === "catalogo" && <Catalogo hidden={hidden} onToggle={(id) => setHidden((c) => ({ ...c, [id]: !c[id] }))} f={fotos} />}
-          {tab === "recetas" && <Recetas />}
-          {tab === "mas" && <Mas seg={seg} onSeg={setSeg} statuses={statuses} />}
+          {aviso && <div role="status" className="rounded-xl bg-rose-soft px-3 py-2 text-[13px] text-rose-ink">{aviso}</div>}
+          {!d.listo ? (
+            <div role="status" className="py-10 text-center text-[14px] text-muted">Cargando tus datos…</div>
+          ) : (
+            <>
+              {tab === "pedidos" && <Pedidos d={d} hoy={hoy} onEditar={editarPedido} />}
+              {tab === "agenda" && <Agenda d={d} hoy={hoy} onEditar={editarPedido} />}
+              {tab === "catalogo" && <Catalogo d={d} onEditar={(p) => setHoja({ tipo: "producto", p, nuevo: false })} onNuevo={() => setHoja({ tipo: "producto", p: productoNuevo(d.catalogo.length + 1), nuevo: true })} />}
+              {tab === "recetas" && <Recetas recetas={d.recetas} onEditar={(r) => setHoja({ tipo: "receta", r, nueva: false })} onNueva={() => setHoja({ tipo: "receta", r: recetaNueva(), nueva: true })} />}
+              {tab === "mas" && <Mas seg={seg} onSeg={setSeg} d={d} hoy={hoy} />}
+            </>
+          )}
         </main>
 
         <nav aria-label="Secciones" className="flex border-t border-line bg-paper px-1 pt-1 pb-[max(14px,env(safe-area-inset-bottom))]">
           {TABS.map((t) => {
             const on = t.key === tab;
+            const marca = t.key === "pedidos" && d.pedidos.some((p) => p.nuevo && !p.rechazado);
             return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setTab(t.key)}
-                aria-current={on ? "page" : undefined}
-                className="flex min-h-14 flex-1 flex-col items-center justify-center gap-[3px] border-none bg-transparent text-[11px]"
-                style={{ color: on ? "#4E3424" : "#7A6352", fontWeight: on ? 600 : 400 }}
-              >
-                <span className="flex h-[26px] w-[34px] items-center justify-center rounded-[13px]" style={{ background: on ? "#F7DDE3" : "transparent" }}>
+              <button key={t.key} type="button" onClick={() => setTab(t.key)} aria-current={on ? "page" : undefined} className="relative flex min-h-14 flex-1 flex-col items-center justify-center gap-[3px] border-none bg-transparent text-[11px]" style={{ color: on ? "#4E3424" : "#7A6352", fontWeight: on ? 600 : 400 }}>
+                <span className="relative flex h-[26px] w-[34px] items-center justify-center rounded-[13px]" style={{ background: on ? "#F7DDE3" : "transparent" }}>
                   {t.icon}
+                  {marca && <span aria-label="Hay pedidos nuevos" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-rose-deep" />}
                 </span>
                 <span>{t.label}</span>
               </button>
@@ -76,6 +106,13 @@ export function Gestion() {
           })}
         </nav>
       </div>
+
+      {hoja?.tipo === "config" && <Configuracion config={d.config} sesion={sesion} onGuardar={d.guardarConfig} onSalir={() => { cerrar(); onSalir(); }} onCerrar={cerrar} />}
+      {hoja?.tipo === "pedido" && <EditorPedido inicial={hoja.p} esNuevo={hoja.nuevo} catalogo={d.catalogo} config={d.config} onGuardar={d.guardarPedido} onBorrar={d.borrarPedido} onCerrar={cerrar} />}
+      {hoja?.tipo === "producto" && (
+        <EditorProducto inicial={hoja.p} esNuevo={hoja.nuevo} foto={d.fotos[hoja.p.id]} categorias={categorias(d.catalogo)} onGuardar={d.guardarProducto} onBorrar={d.borrarProducto} onSubirFoto={d.subirFoto} onQuitarFoto={d.quitarFoto} onCerrar={cerrar} />
+      )}
+      {hoja?.tipo === "receta" && <EditorReceta inicial={hoja.r} esNueva={hoja.nueva} onGuardar={d.guardarReceta} onBorrar={d.borrarReceta} onCerrar={cerrar} />}
     </div>
   );
 }

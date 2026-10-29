@@ -38,6 +38,9 @@
   a:hover { color: var(--color-cocoa-dark); }
   button { cursor: pointer; }
   :focus-visible { outline: 2px solid var(--color-rose-deep); outline-offset: 2px; }
+  /* Campos de número sin flechitas: dejan más espacio para la cifra. */
+  input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

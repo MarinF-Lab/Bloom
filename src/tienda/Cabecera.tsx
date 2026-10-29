@@ -1,11 +1,23 @@
-import { INSTAGRAM, SEASONS, TEMPORADA, WHATSAPP } from "../data/tienda";
+import { SEASONS } from "../data/tienda";
+import { clp } from "../core/money";
 import { Bag, Calendar, Chat, Clock, Instagram, Sparkle, Truck } from "../ui/icons";
 import { Logo } from "../ui/Logo";
 import { Eyebrow, externo } from "./comun";
+import { instagramUrl, textoAnticipacion, useTienda, whatsappUrl } from "./contexto";
 
 export function AvisoTemporada() {
-  if (TEMPORADA === "Ninguna") return null;
-  const s = SEASONS[TEMPORADA];
+  const { config } = useTienda();
+  if (!config.abierta) {
+    return (
+      <div role="status" className="bg-cocoa text-cream">
+        <div className="mx-auto max-w-[1180px] px-6 py-3 text-center text-[14px]">
+          <strong className="font-semibold">Por ahora no estamos recibiendo pedidos.</strong> Puedes ver el catálogo y escribirnos por WhatsApp.
+        </div>
+      </div>
+    );
+  }
+  if (config.temporada === "Ninguna") return null;
+  const s = SEASONS[config.temporada];
   return (
     <div style={{ background: s.bg, color: s.fg }}>
       <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 px-6 py-3 text-center text-[14px]">
@@ -51,6 +63,7 @@ export function Cabecera({ cartCount }: { cartCount: number }) {
 }
 
 export function Portada() {
+  const { config } = useTienda();
   return (
     <section id="inicio" className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-11 px-6 pt-14 pb-[60px]">
       <div className="flex min-w-0 flex-[1_1_440px] flex-col gap-5">
@@ -59,7 +72,7 @@ export function Portada() {
           Dulces momentos que <span className="italic text-rose-deep">florecen</span>
         </h1>
         <p className="m-0 max-w-[520px] text-[17px] leading-[1.65] text-muted">
-          Pastelería casera y personalizada, hecha con amor en Retiro. Tortas, pies, tartaletas y postres por encargo para tus celebraciones.
+          {config.texto}
         </p>
         <div className="flex flex-wrap gap-3">
           <a href="#catalogo" className="flex min-h-12 items-center rounded-3xl bg-cocoa px-[26px] font-medium text-cream">
@@ -72,15 +85,17 @@ export function Portada() {
         <div className="flex flex-wrap gap-2 text-[13px] font-medium">
           <span className="flex items-center gap-1.5 rounded-[14px] bg-olive-soft px-3 py-2 text-olive-ink">
             <Clock size={14} />
-            Pedidos con 24 h de anticipación
+            Pedidos con {textoAnticipacion(config.horasMinimas)} de anticipación
           </span>
-          <span className="flex items-center gap-1.5 rounded-[14px] bg-honey px-3 py-2 text-honey-ink">
-            <Truck size={14} />
-            Despacho gratis sobre $40.000
-          </span>
+          {config.envioGratisDesde > 0 && (
+            <span className="flex items-center gap-1.5 rounded-[14px] bg-honey px-3 py-2 text-honey-ink">
+              <Truck size={14} />
+              Despacho gratis sobre {clp(config.envioGratisDesde)}
+            </span>
+          )}
           <span className="flex items-center gap-1.5 rounded-[14px] bg-rose-soft px-3 py-2 text-rose-ink">
             <Calendar size={14} sw={2} />
-            Lun a sáb · 7:30 a 20:00
+            {config.horario}
           </span>
         </div>
       </div>
@@ -96,6 +111,7 @@ export function Portada() {
 }
 
 export function Urgente() {
+  const { config } = useTienda();
   const boton = "flex min-h-[46px] items-center gap-2 rounded-[23px] px-5 text-[14px] font-medium";
   return (
     <section aria-labelledby="urgente-t" className="bg-rose-deep text-paper">
@@ -109,11 +125,11 @@ export function Urgente() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2.5">
-          <a href={`https://wa.me/${WHATSAPP}`} {...externo} className={boton + " bg-paper text-rose-ink"}>
+          <a href={whatsappUrl(config.whatsapp)} {...externo} className={boton + " bg-paper text-rose-ink"}>
             <Chat size={17} />
             WhatsApp
           </a>
-          <a href={INSTAGRAM} {...externo} className={boton + " bg-paper text-rose-ink"}>
+          <a href={instagramUrl(config.instagram)} {...externo} className={boton + " bg-paper text-rose-ink"}>
             <Instagram size={17} />
             Instagram
           </a>
