@@ -41,6 +41,13 @@ En la [consola de Firebase](https://console.firebase.google.com/project/bloom-52
 
 Para probar la gestión en el computador sin Firebase: `npm run dev` y abrir `http://localhost:5173/?gestion&prueba` (datos en memoria; solo funciona en `localhost`).
 
+## Instalar en el teléfono
+
+Las dos páginas se instalan como apps separadas (Android con Chrome: ⋮ → *Instalar aplicación*; iPhone con Safari: Compartir → *Agregar a inicio*):
+
+- **Bloom** (tienda): desde https://marinf-lab.github.io/Bloom/
+- **Bloom Gestión**: desde https://marinf-lab.github.io/Bloom/gestion/ (abre directo la gestión; usa `manifest-gestion.webmanifest`).
+
 ## Publicación
 
 - **Web**: el workflow `pages.yml` publica `main` en GitHub Pages. Activar una vez en **Settings → Pages → Source: GitHub Actions**. Queda en `https://marinf-lab.github.io/Bloom/`.
