@@ -20,6 +20,10 @@ const postBuild = () => ({
       // Manifest e íconos quedan en la raíz: desde /gestion/ se piden con "../".
       const html = readFileSync(page, "utf8")
         .replace(/(href|src)="\.\/(manifest\.webmanifest|icons\/)/g, '$1="../$2')
+        // Se instala como su propia app ("Bloom Gestión"), que abre directo la gestión.
+        .replace('href="../manifest.webmanifest"', 'href="../manifest-gestion.webmanifest"')
+        .replace('content="Bloom" />', 'content="Bloom Gestión" />')
+        .replace(/<title>[^<]*<\/title>/, "<title>Bloom · Gestión</title>")
         // La gestión es privada: que los buscadores no la muestren.
         .replace("<head>", '<head>\n    <meta name="robots" content="noindex, nofollow" />');
       writeFileSync("dist/gestion/index.html", html);
